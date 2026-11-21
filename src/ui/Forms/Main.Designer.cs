@@ -499,8 +499,6 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelBookmark = new System.Windows.Forms.Label();
             this.textBoxListViewText = new Nikse.SubtitleEdit.Controls.SETextBox();
             this.contextMenuStripTextBoxListView = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemTextBoxMergeDialogWithPrevious = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItemTextBoxMergeDialogWithNext = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparatorSpellCheckSuggestions = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripMenuItemSpellCheckSkipOnce = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItemSpellCheckSkipAll = new System.Windows.Forms.ToolStripMenuItem();
@@ -5101,8 +5099,6 @@ namespace Nikse.SubtitleEdit.Forms
             this.deleteToolStripMenuItem1,
             this.toolStripMenuItemSplitViaWaveform,
             this.toolStripMenuItemSplitTextAtCursor,
-            this.toolStripMenuItemTextBoxMergeDialogWithPrevious,
-            this.toolStripMenuItemTextBoxMergeDialogWithNext,
             this.toolStripSeparator15,
             this.selectAllToolStripMenuItem1,
             this.toolStripSeparator13,
@@ -5127,20 +5123,6 @@ namespace Nikse.SubtitleEdit.Forms
             this.contextMenuStripTextBoxListView.Closing += new System.Windows.Forms.ToolStripDropDownClosingEventHandler(this.ContextMenuStripTextBoxListViewClosing);
             this.contextMenuStripTextBoxListView.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuStripTextBoxListViewOpening);
             this.contextMenuStripTextBoxListView.Opened += new System.EventHandler(this.MenuOpened);
-            //
-            // toolStripMenuItemTextBoxMergeDialogWithPrevious
-            //
-            this.toolStripMenuItemTextBoxMergeDialogWithPrevious.Name = "toolStripMenuItemTextBoxMergeDialogWithPrevious";
-            this.toolStripMenuItemTextBoxMergeDialogWithPrevious.Size = new System.Drawing.Size(272, 22);
-            this.toolStripMenuItemTextBoxMergeDialogWithPrevious.Text = "Merge with previous as dialog";
-            this.toolStripMenuItemTextBoxMergeDialogWithPrevious.Click += new System.EventHandler(this.TextBoxMergeDialogWithPreviousClick);
-            //
-            // toolStripMenuItemTextBoxMergeDialogWithNext
-            //
-            this.toolStripMenuItemTextBoxMergeDialogWithNext.Name = "toolStripMenuItemTextBoxMergeDialogWithNext";
-            this.toolStripMenuItemTextBoxMergeDialogWithNext.Size = new System.Drawing.Size(272, 22);
-            this.toolStripMenuItemTextBoxMergeDialogWithNext.Text = "Merge with next as dialog";
-            this.toolStripMenuItemTextBoxMergeDialogWithNext.Click += new System.EventHandler(this.TextBoxMergeDialogWithNextClick);
             // 
             // toolStripSeparatorSpellCheckSuggestions
             // 
@@ -6435,8 +6417,6 @@ namespace Nikse.SubtitleEdit.Forms
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator21;
         private System.Windows.Forms.ToolStripMenuItem editSelectAllToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStripTextBoxListView;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemTextBoxMergeDialogWithPrevious;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemTextBoxMergeDialogWithNext;
         private System.Windows.Forms.ToolStripMenuItem cutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;

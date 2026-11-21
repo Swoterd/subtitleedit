@@ -2487,8 +2487,6 @@ namespace Nikse.SubtitleEdit.Forms
             mergeWithNextToolStripMenuItem.Text = languageWaveform.MergeWithNext;
             mergeDialogWithPreviousToolStripMenuItem.Text = languageWaveform.MergeWithPreviousAsDialog ?? "Merge with previous as dialog";
             mergeDialogWithNextToolStripMenuItem.Text = languageWaveform.MergeWithNextAsDialog ?? "Merge with next as dialog";
-            toolStripMenuItemTextBoxMergeDialogWithPrevious.Text = mergeDialogWithPreviousToolStripMenuItem.Text;
-            toolStripMenuItemTextBoxMergeDialogWithNext.Text = mergeDialogWithNextToolStripMenuItem.Text;
             toolStripMenuItemListMergeDialogWithPrevious.Text = mergeDialogWithPreviousToolStripMenuItem.Text;
             toolStripMenuItemListMergeDialogWithNext.Text = mergeDialogWithNextToolStripMenuItem.Text;
             extendToPreviousToolStripMenuItem.Text = languageWaveform.ExtendToPrevious;
@@ -31976,10 +31974,6 @@ namespace Nikse.SubtitleEdit.Forms
         {
             var tb = GetFocusedTextBox();
             toolStripMenuItemSplitTextAtCursor.Visible = tb.Text.Length > 1;
-            var selectedIndex = FirstSelectedIndex;
-            var canMerge = InListView && tb.Enabled && !tb.ReadOnly && selectedIndex >= 0 && selectedIndex < _subtitle.Paragraphs.Count;
-            toolStripMenuItemTextBoxMergeDialogWithPrevious.Enabled = canMerge && selectedIndex > 0;
-            toolStripMenuItemTextBoxMergeDialogWithNext.Enabled = canMerge && selectedIndex + 1 < _subtitle.Paragraphs.Count;
 
             if (IsLiveSpellCheckEnabled && InListView)
             {
@@ -32181,31 +32175,6 @@ namespace Nikse.SubtitleEdit.Forms
             }
 
             MergeWithLineAfter(true, firstIndex: Math.Min(index, otherIndex));
-        }
-
-        private void TextBoxMergeDialogWithPreviousClick(object sender, EventArgs e)
-        {
-            MergeTextBoxParagraphAsDialog(-1);
-        }
-
-        private void TextBoxMergeDialogWithNextClick(object sender, EventArgs e)
-        {
-            MergeTextBoxParagraphAsDialog(1);
-        }
-
-        private void MergeTextBoxParagraphAsDialog(int direction)
-        {
-            var tb = GetFocusedTextBox();
-            var index = FirstSelectedIndex;
-            var otherIndex = index + direction;
-            if (!InListView || !tb.Enabled || tb.ReadOnly || index < 0 || index >= _subtitle.Paragraphs.Count ||
-                otherIndex < 0 || otherIndex >= _subtitle.Paragraphs.Count)
-            {
-                return;
-            }
-
-            MergeWithLineAfter(true, firstIndex: Math.Min(index, otherIndex));
-            tb.Focus();
         }
 
         private void ContextMenuStripTextBoxListViewClosing(object sender, ToolStripDropDownClosingEventArgs e)
