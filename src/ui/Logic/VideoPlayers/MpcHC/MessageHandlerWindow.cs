@@ -13,6 +13,8 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             Text = Guid.NewGuid().ToString();
         }
 
+        protected override bool ShowWithoutActivation => true;
+
         protected override void WndProc(ref Message m)
         {
             if (m.Msg == NativeMethods.WindowsMessageCopyData && OnCopyData != null)

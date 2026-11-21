@@ -205,7 +205,8 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             _ownerControl = ownerControl;
             _form = new MessageHandlerWindow();
             _form.OnCopyData += OnCopyData;
-            // Accessing Handle below creates the hidden IPC window without activating it.
+            _form.Show();
+            _form.Hide();
             _videoPanelHandle = ownerControl.Handle;
             _messageHandlerHandle = _form.Handle;
             _videoFileName = videoFileName;
@@ -340,8 +341,8 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                 return;
             }
 
+            NativeMethods.ShowWindow(handle, NativeMethods.ShowWindowCommands.Hide);
             NativeMethods.SetWindowPos(handle, IntPtr.Zero, -9999, -9999, 0, 0,
-                NativeMethods.SetWindowPosFlags.SWP_HIDEWINDOW |
                 NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE |
                 NativeMethods.SetWindowPosFlags.SWP_NOZORDER |
                 NativeMethods.SetWindowPosFlags.SWP_NOOWNERZORDER);
@@ -421,7 +422,10 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                 {
                     _videoHandle = (IntPtr)h;
                     NativeMethods.SetParent((IntPtr)h, _videoPanelHandle);
-                    HideMpcPlayerWindow();
+                    NativeMethods.SetWindowPos(handle, IntPtr.Zero, -9999, -9999, 0, 0,
+                        NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE |
+                        NativeMethods.SetWindowPosFlags.SWP_NOZORDER |
+                        NativeMethods.SetWindowPosFlags.SWP_NOOWNERZORDER);
                     return true;
                 }
             }
@@ -437,10 +441,10 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                 return;
             }
 
-            // The video child has been reparented to SE; the hidden MPC main window stays hidden.
-            NativeMethods.SetWindowPos(_videoHandle, IntPtr.Zero, 0, 0, width, height,
+            NativeMethods.ShowWindow(GetMainWindowHandle(), NativeMethods.ShowWindowCommands.ShowNoActivate);
+            // Raise the renderer inside its video panel, without activating it or its owner.
+            NativeMethods.SetWindowPos(_videoHandle, (IntPtr)NativeMethods.SpecialWindowHandles.HWND_TOP, 0, 0, width, height,
                 NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE |
-                NativeMethods.SetWindowPosFlags.SWP_NOZORDER |
                 NativeMethods.SetWindowPosFlags.SWP_NOOWNERZORDER);
             HideMpcPlayerWindow();
         }
