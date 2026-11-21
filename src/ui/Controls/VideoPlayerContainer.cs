@@ -1042,6 +1042,14 @@ namespace Nikse.SubtitleEdit.Controls
 
         private void UpdateTranslationPreviewOverlay(string text, string originalText)
         {
+            var owner = FindForm();
+            SetTranslationPreviewOverlayOwner(owner);
+            if (!CanShowTranslationPreviewOverlay(owner))
+            {
+                HideTranslationPreviewOverlay();
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(text) && string.IsNullOrWhiteSpace(originalText))
             {
                 _translationPreviewOverlay?.SetText(string.Empty, string.Empty, FontSizeFactor);
@@ -1050,37 +1058,45 @@ namespace Nikse.SubtitleEdit.Controls
 
             if (_translationPreviewOverlay == null || _translationPreviewOverlay.IsDisposed)
             {
-                _translationPreviewOverlay = new TranslationPreviewOverlayForm();
-            }
-
-            var owner = FindForm();
-            SetTranslationPreviewOverlayOwner(owner);
-            if (owner?.Icon != null)
-            {
-                _translationPreviewOverlay.Icon = owner.Icon;
+                _translationPreviewOverlay = new TranslationPreviewOverlayForm { Owner = owner };
+                if (owner.Icon != null)
+                {
+                    _translationPreviewOverlay.Icon = owner.Icon;
+                }
             }
 
             _translationPreviewOverlay.SetText(text, originalText, FontSizeFactor);
+            UpdateTranslationPreviewOverlayBounds(true);
             if (!_translationPreviewOverlay.Visible)
             {
-                _translationPreviewOverlay.CreateControl();
-                UpdateTranslationPreviewOverlayBounds(true);
-                NativeMethods.ShowWindow(_translationPreviewOverlay.Handle, 4); // SW_SHOWNOACTIVATE
+                // ShowWithoutActivation keeps input in the editor, and ownership keeps
+                // this overlay above its SE window without promoting other instances.
+                _translationPreviewOverlay.Show(owner);
             }
+        }
 
-            UpdateTranslationPreviewOverlayBounds();
-            NativeMethods.SetWindowPos(_translationPreviewOverlay.Handle, 0, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010); // HWND_TOP, NOSIZE, NOMOVE, NOACTIVATE
+        private bool CanShowTranslationPreviewOverlay(Form owner)
+        {
+            return owner != null && !owner.IsDisposed && !owner.Disposing && owner.IsHandleCreated &&
+                   owner.Visible && owner.WindowState != FormWindowState.Minimized &&
+                   Visible && PanelPlayer.Visible && NativeMethods.GetForegroundWindow() == owner.Handle;
         }
 
         private void UpdateTranslationPreviewOverlayBounds(bool allowHidden = false)
         {
-            if (_translationPreviewOverlay == null || _translationPreviewOverlay.IsDisposed || !_translationPreviewOverlay.Visible && !allowHidden)
+            if (_translationPreviewOverlay == null || _translationPreviewOverlay.IsDisposed ||
+                !_translationPreviewOverlay.Visible && !allowHidden ||
+                !CanShowTranslationPreviewOverlay(_translationPreviewOverlayOwner))
             {
                 return;
             }
 
             var location = PanelPlayer.PointToScreen(Point.Empty);
-            _translationPreviewOverlay.Bounds = new Rectangle(location, PanelPlayer.Size);
+            var bounds = new Rectangle(location, PanelPlayer.Size);
+            if (_translationPreviewOverlay.Bounds != bounds)
+            {
+                _translationPreviewOverlay.Bounds = bounds;
+            }
         }
 
         private void HideTranslationPreviewOverlay()
@@ -1088,7 +1104,10 @@ namespace Nikse.SubtitleEdit.Controls
             if (_translationPreviewOverlay != null && !_translationPreviewOverlay.IsDisposed)
             {
                 _translationPreviewOverlay.SetText(string.Empty, string.Empty, FontSizeFactor);
-                _translationPreviewOverlay.Hide();
+                if (_translationPreviewOverlay.Visible)
+                {
+                    _translationPreviewOverlay.Hide();
+                }
             }
         }
 
@@ -1109,6 +1128,11 @@ namespace Nikse.SubtitleEdit.Controls
             }
 
             _translationPreviewOverlayOwner = owner;
+            if (_translationPreviewOverlay != null && !_translationPreviewOverlay.IsDisposed)
+            {
+                _translationPreviewOverlay.Owner = owner;
+            }
+
             if (_translationPreviewOverlayOwner != null)
             {
                 _translationPreviewOverlayOwner.LocationChanged += TranslationPreviewOverlayOwnerChanged;
@@ -1121,14 +1145,25 @@ namespace Nikse.SubtitleEdit.Controls
 
         private void TranslationPreviewOverlayOwnerChanged(object sender, EventArgs e)
         {
-            UpdateTranslationPreviewOverlayBounds();
+            if (UseTopLevelTranslationOverlayMode())
+            {
+                UpdateTranslationPreviewOverlay(_subtitleText, _subtitleTextOriginal);
+            }
         }
 
         private void TranslationPreviewOverlayOwnerActivated(object sender, EventArgs e)
         {
-            if (UseTopLevelTranslationOverlay())
+            var owner = _translationPreviewOverlayOwner;
+            if (owner != null && !owner.IsDisposed && owner.IsHandleCreated && UseTopLevelTranslationOverlay())
             {
-                UpdateTranslationPreviewOverlay(_subtitleText, _subtitleTextOriginal);
+                // Finish the taskbar/foreground transition before showing an owned popup.
+                owner.BeginInvoke(new Action(() =>
+                {
+                    if (!IsDisposed && owner == _translationPreviewOverlayOwner && UseTopLevelTranslationOverlay())
+                    {
+                        UpdateTranslationPreviewOverlay(_subtitleText, _subtitleTextOriginal);
+                    }
+                }));
             }
         }
 
