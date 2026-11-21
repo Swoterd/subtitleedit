@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Text;
 using System.Globalization;
+using System.Linq;
 using System.Windows.Forms;
 using Nikse.SubtitleEdit.Core.Settings;
 
@@ -87,6 +88,15 @@ namespace Nikse.SubtitleEdit.Controls
         private static readonly object SetStartTimeAndDurationLock = new object();
         private readonly Timer _syntaxColorLineTimer;
         private readonly Timer _setStartAndDurationTimer;
+        private readonly Timer _mouseDragSelectTimer;
+        private Point _mouseDragSelectStartPoint;
+        private Point _mouseDragSelectCurrentPoint;
+        private int _mouseDragSelectAnchorIndex = InvalidIndex;
+        private int _mouseDragSelectLastIndex = InvalidIndex;
+        private int _mouseDragSelectRangeStart = InvalidIndex;
+        private int _mouseDragSelectRangeEnd = InvalidIndex;
+        private bool _mouseDragSelectPending;
+        private bool _mouseDragSelectActive;
 
         public int FirstVisibleIndex { get; set; } = -1;
 
@@ -389,6 +399,216 @@ namespace Nikse.SubtitleEdit.Controls
 
             _setLastColumnWidthTimer = new Timer { Interval = 50 };
             _setLastColumnWidthTimer.Tick += SetLastColumnWidthTimer_Tick;
+
+            _mouseDragSelectTimer = new Timer { Interval = 35 };
+            _mouseDragSelectTimer.Tick += MouseDragSelectTimer_Tick;
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && e.Clicks == 1 && MultiSelect && ModifierKeys == Keys.None)
+            {
+                var item = GetItemAt(e.X, e.Y);
+                _mouseDragSelectPending = item != null;
+                _mouseDragSelectActive = false;
+                _mouseDragSelectAnchorIndex = item?.Index ?? InvalidIndex;
+                _mouseDragSelectLastIndex = InvalidIndex;
+                _mouseDragSelectRangeStart = InvalidIndex;
+                _mouseDragSelectRangeEnd = InvalidIndex;
+                _mouseDragSelectStartPoint = e.Location;
+                _mouseDragSelectCurrentPoint = e.Location;
+            }
+            else
+            {
+                StopMouseDragSelect();
+            }
+
+            base.OnMouseDown(e);
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            if (_mouseDragSelectPending && e.Button == MouseButtons.Left)
+            {
+                _mouseDragSelectCurrentPoint = e.Location;
+
+                if (!_mouseDragSelectActive && HasMouseMovedFarEnoughForDragSelect(e.Location))
+                {
+                    _mouseDragSelectActive = true;
+                    Capture = true;
+                    var targetIndex = GetMouseDragSelectTargetIndex(e.Location);
+                    SelectMouseDragRange(targetIndex);
+                    ScrollMouseDragSelectToTarget(targetIndex, e.Location);
+                    _mouseDragSelectTimer.Start();
+                }
+                else if (_mouseDragSelectActive)
+                {
+                    var targetIndex = GetMouseDragSelectTargetIndex(e.Location);
+                    SelectMouseDragRange(targetIndex);
+                    ScrollMouseDragSelectToTarget(targetIndex, e.Location);
+                    if (e.Y < 0 || e.Y >= ClientSize.Height)
+                    {
+                        _mouseDragSelectTimer.Start();
+                    }
+                    else
+                    {
+                        _mouseDragSelectTimer.Stop();
+                    }
+                }
+            }
+
+            base.OnMouseMove(e);
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            StopMouseDragSelect();
+            base.OnMouseUp(e);
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            if (!_mouseDragSelectActive)
+            {
+                base.OnMouseLeave(e);
+                return;
+            }
+
+            _mouseDragSelectTimer.Start();
+            base.OnMouseLeave(e);
+        }
+
+        private bool HasMouseMovedFarEnoughForDragSelect(Point location)
+        {
+            var dragSize = SystemInformation.DragSize;
+            return Math.Abs(location.X - _mouseDragSelectStartPoint.X) > dragSize.Width / 2 ||
+                   Math.Abs(location.Y - _mouseDragSelectStartPoint.Y) > dragSize.Height / 2;
+        }
+
+        private void MouseDragSelectTimer_Tick(object sender, EventArgs e)
+        {
+            if (!_mouseDragSelectActive || (MouseButtons & MouseButtons.Left) != MouseButtons.Left)
+            {
+                StopMouseDragSelect();
+                return;
+            }
+
+            _mouseDragSelectCurrentPoint = PointToClient(Cursor.Position);
+            var targetIndex = GetMouseDragSelectTargetIndex(_mouseDragSelectCurrentPoint);
+            SelectMouseDragRange(targetIndex);
+            ScrollMouseDragSelectToTarget(targetIndex, _mouseDragSelectCurrentPoint);
+        }
+
+        private int GetMouseDragSelectTargetIndex(Point location)
+        {
+            if (Items.Count == 0)
+            {
+                return InvalidIndex;
+            }
+
+            var item = GetItemAt(Math.Max(0, Math.Min(ClientSize.Width - 1, location.X)), Math.Max(0, Math.Min(ClientSize.Height - 1, location.Y)));
+            if (item != null && location.Y >= 0 && location.Y < ClientSize.Height)
+            {
+                return item.Index;
+            }
+
+            var topIndex = TopItem?.Index ?? 0;
+            var itemHeight = GetItemHeight();
+            var visibleCount = Math.Max(1, ClientSize.Height / Math.Max(1, itemHeight));
+            var distance = location.Y < 0 ? -location.Y : location.Y - ClientSize.Height;
+            var scrollRows = Math.Min(60, Math.Max(1, distance / Math.Max(1, itemHeight) + 1));
+
+            if (location.Y < 0)
+            {
+                return Math.Max(0, topIndex - scrollRows);
+            }
+
+            var bottomIndex = Math.Min(Items.Count - 1, topIndex + visibleCount - 1);
+            return Math.Min(Items.Count - 1, bottomIndex + scrollRows);
+        }
+
+        private void ScrollMouseDragSelectToTarget(int targetIndex, Point location)
+        {
+            if (targetIndex != InvalidIndex && (location.Y < 0 || location.Y >= ClientSize.Height))
+            {
+                EnsureVisible(targetIndex);
+            }
+        }
+
+        private int GetItemHeight()
+        {
+            return Items.Count > 0 ? Math.Max(1, Items[0].Bounds.Height) : Math.Max(1, Font.Height + 6);
+        }
+
+        private void SelectMouseDragRange(int targetIndex)
+        {
+            if (_mouseDragSelectAnchorIndex == InvalidIndex || targetIndex == InvalidIndex || targetIndex == _mouseDragSelectLastIndex)
+            {
+                return;
+            }
+
+            _mouseDragSelectLastIndex = targetIndex;
+            var start = Math.Min(_mouseDragSelectAnchorIndex, targetIndex);
+            var end = Math.Max(_mouseDragSelectAnchorIndex, targetIndex);
+
+            BeginUpdate();
+            try
+            {
+                if (_mouseDragSelectRangeStart == InvalidIndex || _mouseDragSelectRangeEnd == InvalidIndex)
+                {
+                    for (var i = 0; i < Items.Count; i++)
+                    {
+                        var shouldSelect = i >= start && i <= end;
+                        if (Items[i].Selected != shouldSelect)
+                        {
+                            Items[i].Selected = shouldSelect;
+                        }
+                    }
+                }
+                else
+                {
+                    UpdateMouseDragSelectRange(_mouseDragSelectRangeStart, _mouseDragSelectRangeEnd, false, start, end);
+                    UpdateMouseDragSelectRange(start, end, true, _mouseDragSelectRangeStart, _mouseDragSelectRangeEnd);
+                }
+
+                _mouseDragSelectRangeStart = start;
+                _mouseDragSelectRangeEnd = end;
+            }
+            finally
+            {
+                EndUpdate();
+            }
+        }
+
+        private void UpdateMouseDragSelectRange(int start, int end, bool selected, int skipStart, int skipEnd)
+        {
+            start = Math.Max(0, start);
+            end = Math.Min(Items.Count - 1, end);
+
+            for (var i = start; i <= end; i++)
+            {
+                if (i >= skipStart && i <= skipEnd)
+                {
+                    continue;
+                }
+
+                if (Items[i].Selected != selected)
+                {
+                    Items[i].Selected = selected;
+                }
+            }
+        }
+
+        private void StopMouseDragSelect()
+        {
+            _mouseDragSelectTimer.Stop();
+            _mouseDragSelectPending = false;
+            _mouseDragSelectActive = false;
+            _mouseDragSelectAnchorIndex = InvalidIndex;
+            _mouseDragSelectLastIndex = InvalidIndex;
+            _mouseDragSelectRangeStart = InvalidIndex;
+            _mouseDragSelectRangeEnd = InvalidIndex;
+            Capture = false;
         }
 
         private void SetLastColumnWidthTimer_Tick(object sender, EventArgs e)
@@ -866,7 +1086,7 @@ namespace Nikse.SubtitleEdit.Controls
                 else if (ColumnIndexNumber >= 0)
                 {
                     SubtitleColumns.Insert(ColumnIndexNumber + 1, SubtitleColumn.End);
-                    Columns.Insert(ColumnIndexStart + 1, ch);
+                    Columns.Insert(ColumnIndexNumber + 1, ch);
                 }
                 else
                 {
@@ -1258,52 +1478,374 @@ namespace Nikse.SubtitleEdit.Controls
             }
         }
 
-        internal void Fill(Subtitle subtitle, Subtitle subtitleOriginal = null)
+        internal void ClearPendingHistoryRowUpdates()
         {
-            if (subtitleOriginal == null || subtitleOriginal.Paragraphs.Count == 0)
+            lock (SyntaxColorListLock)
             {
-                Fill(subtitle.Paragraphs);
+                _syntaxColorLineTimer.Stop();
+                _syntaxColorList.Clear();
+            }
+
+            lock (SetStartTimeAndDurationLock)
+            {
+                _setStartAndDurationTimer.Stop();
+                _setStartAndDurationList.Clear();
+            }
+        }
+
+        internal bool TryUpdateRows(Subtitle subtitle, Subtitle subtitleOriginal)
+        {
+            if (ListViewItemSorter != null || Sorting != SortOrder.None || ColumnIndexText <= 0)
+            {
+                return false;
+            }
+
+            var paragraphs = subtitle.Paragraphs;
+            var originalParagraphs = ColumnIndexTextOriginal < 0 ? null : subtitleOriginal?.Paragraphs;
+            HashSet<int> changedNeighbors = null;
+            if (Items.Count != paragraphs.Count)
+            {
+                if (!TryReconcileRows(paragraphs, originalParagraphs, out changedNeighbors))
+                {
+                    return false;
+                }
             }
             else
             {
-                Fill(subtitle.Paragraphs, subtitleOriginal.Paragraphs);
+                for (var index = 0; index < paragraphs.Count; index++)
+                {
+                    if (!CanReuseRow(Items[index], paragraphs[index]))
+                    {
+                        return false;
+                    }
+                }
             }
+
+            for (var index = 0; index < paragraphs.Count; index++)
+            {
+                var item = Items[index];
+                var paragraph = paragraphs[index];
+                var previous = (Paragraph)item.Tag;
+                var timingChanged = previous.StartTime.TotalMilliseconds != paragraph.StartTime.TotalMilliseconds ||
+                                    previous.EndTime.TotalMilliseconds != paragraph.EndTime.TotalMilliseconds;
+                item.Tag = paragraph;
+                var number = paragraph.Number.ToString(CultureInfo.InvariantCulture);
+                if (item.Text != number)
+                {
+                    item.Text = number;
+                }
+
+                var textChanged = item.SubItems[ColumnIndexText].Text != paragraph.Text.Replace(Environment.NewLine, _lineSeparatorString);
+                if (textChanged)
+                {
+                    SetText(index, paragraph.Text);
+                }
+
+                if (timingChanged)
+                {
+                    if (changedNeighbors == null)
+                    {
+                        changedNeighbors = new HashSet<int>();
+                    }
+
+                    changedNeighbors.Add(index - 1);
+                    changedNeighbors.Add(index);
+                    changedNeighbors.Add(index + 1);
+                }
+                else if (textChanged)
+                {
+                    SyntaxColorLine(paragraphs, index, paragraph);
+                }
+
+                if (ColumnIndexTextOriginal >= 0)
+                {
+                    var original = originalParagraphs == null ? null : Utilities.GetOriginalParagraph(index, paragraph, originalParagraphs);
+                    var text = original?.Text ?? string.Empty;
+                    if (item.SubItems[ColumnIndexTextOriginal].Text != text.Replace(Environment.NewLine, _lineSeparatorString))
+                    {
+                        SetOriginalText(index, text);
+                    }
+                }
+            }
+
+            if (changedNeighbors != null)
+            {
+                foreach (var index in changedNeighbors)
+                {
+                    var paragraph = subtitle.GetParagraphOrDefault(index);
+                    if (paragraph == null)
+                    {
+                        continue;
+                    }
+
+                    var item = Items[index];
+                    SetRowTiming(item, paragraph, subtitle.GetParagraphOrDefault(index + 1));
+                    if (ColumnIndexGap >= 0)
+                    {
+                        item.SubItems[ColumnIndexGap].BackColor = BackColor;
+                    }
+
+                    // Neighbor changes can remove the last overlap warning from an edge row.
+                    if (index == 0 && ColumnIndexStart >= 0)
+                    {
+                        item.SubItems[ColumnIndexStart].BackColor = BackColor;
+                    }
+
+                    if (index == paragraphs.Count - 1 && ColumnIndexEnd >= 0)
+                    {
+                        item.SubItems[ColumnIndexEnd].BackColor = BackColor;
+                    }
+
+                    SyntaxColorLine(paragraphs, index, paragraph);
+                }
+            }
+
+            return true;
+        }
+
+        private bool CanReuseRow(ListViewItem item, Paragraph paragraph)
+        {
+            return item.Tag is Paragraph previous && item.SubItems.Count == Columns.Count &&
+                   previous.Actor == paragraph.Actor && previous.Region == paragraph.Region &&
+                   previous.Extra == paragraph.Extra && previous.Bookmark == paragraph.Bookmark;
+        }
+
+        private bool TryReconcileRows(List<Paragraph> paragraphs, List<Paragraph> originalParagraphs, out HashSet<int> changedNeighbors,
+            ListViewItem[] preparedRows = null, bool clearSelection = false)
+        {
+            changedNeighbors = null;
+            if (ListViewItemSorter != null || Sorting != SortOrder.None)
+            {
+                return false;
+            }
+
+            var existingIndices = new Dictionary<string, int>(Items.Count);
+            for (var index = 0; index < Items.Count; index++)
+            {
+                if (!(Items[index].Tag is Paragraph paragraph) || existingIndices.ContainsKey(paragraph.Id))
+                {
+                    return false;
+                }
+
+                existingIndices.Add(paragraph.Id, index);
+            }
+
+            var targetIds = new HashSet<string>();
+            var insertedIndices = new List<int>();
+            var previousIndex = -1;
+            var retainedCount = 0;
+            for (var index = 0; index < paragraphs.Count; index++)
+            {
+                var paragraph = paragraphs[index];
+                if (!targetIds.Add(paragraph.Id))
+                {
+                    return false;
+                }
+
+                if (!existingIndices.TryGetValue(paragraph.Id, out var existingIndex))
+                {
+                    insertedIndices.Add(index);
+                    continue;
+                }
+
+                var item = Items[existingIndex];
+                if (existingIndex <= previousIndex ||
+                    (preparedRows == null ? !CanReuseRow(item, paragraph) : item.SubItems.Count != preparedRows[index].SubItems.Count))
+                {
+                    return false;
+                }
+
+                previousIndex = existingIndex;
+                retainedCount++;
+            }
+
+            // History and local edits use the narrower path. A full refresh has already rendered new rows.
+            if (preparedRows == null ? retainedCount != Math.Min(Items.Count, paragraphs.Count) : retainedCount == 0)
+            {
+                return false;
+            }
+
+            var topItem = TopItem;
+            var topIndex = topItem?.Index ?? -1;
+            if (clearSelection)
+            {
+                SelectedIndices.Clear();
+                if (FocusedItem != null)
+                {
+                    FocusedItem.Focused = false;
+                }
+            }
+
+            changedNeighbors = preparedRows == null ? new HashSet<int>() : null;
+            if (Items.Count != retainedCount)
+            {
+                var removedIndices = new List<int>();
+                for (var index = 0; index < Items.Count; index++)
+                {
+                    var paragraph = (Paragraph)Items[index].Tag;
+                    if (!targetIds.Contains(paragraph.Id))
+                    {
+                        removedIndices.Add(index);
+                    }
+                }
+
+                var remainingTopIndex = topIndex;
+                for (var index = removedIndices.Count - 1; index >= 0; index--)
+                {
+                    var removedIndex = removedIndices[index];
+                    Items.RemoveAt(removedIndex);
+                    if (removedIndex < topIndex)
+                    {
+                        remainingTopIndex--;
+                    }
+
+                    var nextIndex = removedIndex - index;
+                    changedNeighbors?.Add(nextIndex - 1);
+                    changedNeighbors?.Add(nextIndex);
+                }
+
+                topIndex = remainingTopIndex;
+            }
+
+            if (insertedIndices.Count > 0)
+            {
+                var font = preparedRows == null
+                    ? (Items.Count == 0 ? new Font(SubtitleFontName, SubtitleFontSize, GetFontStyle()) : Items[0].Font)
+                    : null;
+                foreach (var index in insertedIndices)
+                {
+                    ListViewItem item;
+                    if (preparedRows != null)
+                    {
+                        item = preparedRows[index];
+                    }
+                    else
+                    {
+                        var paragraph = paragraphs[index];
+                        var original = originalParagraphs == null ? null : Utilities.GetOriginalParagraph(index, paragraph, originalParagraphs);
+                        var next = index + 1 < paragraphs.Count ? paragraphs[index + 1] : null;
+                        item = MakeListViewItem(paragraph, next, original, font);
+                    }
+
+                    Items.Insert(index, item);
+                    if (index <= topIndex)
+                    {
+                        topIndex++;
+                    }
+
+                    changedNeighbors?.Add(index - 1);
+                    changedNeighbors?.Add(index);
+                    changedNeighbors?.Add(index + 1);
+                }
+            }
+
+            if (topIndex >= 0 && Items.Count > 0)
+            {
+                var anchor = topItem.ListView == this ? topItem : Items[Math.Min(topIndex, Items.Count - 1)];
+                if (TopItem != anchor)
+                {
+                    TopItem = anchor;
+                }
+            }
+
+            return true;
+        }
+
+        internal void Fill(Subtitle subtitle, Subtitle subtitleOriginal = null)
+        {
+            FillRows(subtitle.Paragraphs, subtitleOriginal?.Paragraphs, false);
+        }
+
+        internal void RefreshPresentation(Subtitle subtitle, Subtitle subtitleOriginal)
+        {
+            FillRows(subtitle.Paragraphs, subtitleOriginal?.Paragraphs, true);
         }
 
         internal void Fill(List<Paragraph> paragraphs)
         {
+            FillRows(paragraphs, null, false);
+        }
+
+        internal void Fill(List<Paragraph> paragraphs, List<Paragraph> paragraphsOriginal)
+        {
+            FillRows(paragraphs, paragraphsOriginal, false);
+        }
+
+        private void FillRows(List<Paragraph> paragraphs, List<Paragraph> originalParagraphs, bool preserveSelection)
+        {
             SaveFirstVisibleIndex();
-            BeginUpdate();
-            Items.Clear();
-            var x = ListViewItemSorter;
-            ListViewItemSorter = null;
+            ClearPendingHistoryRowUpdates();
+
+            var rows = new ListViewItem[paragraphs.Count];
             var font = new Font(SubtitleFontName, SubtitleFontSize, GetFontStyle());
-            var items = new ListViewItem[paragraphs.Count];
             for (var index = 0; index < paragraphs.Count; index++)
             {
                 var paragraph = paragraphs[index];
-                Paragraph next = null;
-                if (index + 1 < paragraphs.Count)
-                {
-                    next = paragraphs[index + 1];
-                }
-                items[index] = MakeListViewItem(paragraph, next, null, font);
+                var original = originalParagraphs == null || originalParagraphs.Count == 0
+                    ? null
+                    : Utilities.GetOriginalParagraph(index, paragraph, originalParagraphs);
+                var next = index + 1 < paragraphs.Count ? paragraphs[index + 1] : null;
+                rows[index] = MakeListViewItem(paragraph, next, original, font);
             }
 
-            Items.AddRange(items);
-
-            if (UseSyntaxColoring && _settings != null)
+            var sorter = ListViewItemSorter;
+            BeginUpdate();
+            try
             {
-                for (var index = 0; index < paragraphs.Count; index++)
+                if (Items.Count > 0 && rows.Length > 0 &&
+                    TryReconcileRows(paragraphs, originalParagraphs, out _, rows, !preserveSelection))
                 {
-                    var paragraph = paragraphs[index];
-                    var item = items[index];
-                    SyntaxColorListViewItem(paragraphs, index, paragraph, item);
+                    for (var index = 0; index < rows.Length; index++)
+                    {
+                        UpdateRenderedRow(Items[index], rows[index]);
+                    }
+                }
+                else
+                {
+                    var selectedIndices = preserveSelection ? SelectedIndices.Cast<int>().ToArray() : null;
+                    var focusedIndex = FocusedItem?.Index ?? -1;
+                    var topIndex = FirstVisibleIndex;
+                    ListViewItemSorter = null;
+                    Items.Clear();
+                    Items.AddRange(rows);
+
+                    if (selectedIndices != null)
+                    {
+                        foreach (var index in selectedIndices.Where(IsValidIndex))
+                        {
+                            Items[index].Selected = true;
+                        }
+
+                        if (IsValidIndex(focusedIndex))
+                        {
+                            Items[focusedIndex].Focused = true;
+                        }
+
+                        if (IsValidIndex(topIndex))
+                        {
+                            TopItem = Items[topIndex];
+                        }
+                    }
+                }
+
+                if (UseSyntaxColoring && _settings != null)
+                {
+                    for (var index = 0; index < rows.Length; index++)
+                    {
+                        var row = rows[index].ListView == this ? rows[index] : Items[index];
+                        SyntaxColorListViewItem(paragraphs, index, paragraphs[index], row);
+                    }
                 }
             }
+            finally
+            {
+                if (sorter != null)
+                {
+                    ListViewItemSorter = sorter;
+                }
 
-            ListViewItemSorter = x;
-            EndUpdate();
+                EndUpdate();
+            }
 
             if (FirstVisibleIndex == 0)
             {
@@ -1311,45 +1853,47 @@ namespace Nikse.SubtitleEdit.Controls
             }
         }
 
-        internal void Fill(List<Paragraph> paragraphs, List<Paragraph> paragraphsOriginal)
+        private void UpdateRenderedRow(ListViewItem item, ListViewItem rendered)
         {
-            SaveFirstVisibleIndex();
-            BeginUpdate();
-            Items.Clear();
-            var x = ListViewItemSorter;
-            ListViewItemSorter = null;
-            var items = new ListViewItem[paragraphs.Count];
-            var font = new Font(SubtitleFontName, SubtitleFontSize, GetFontStyle());
-            for (var index = 0; index < paragraphs.Count; index++)
+            item.Tag = rendered.Tag;
+            if (ReferenceEquals(item, rendered))
             {
-                var paragraph = paragraphs[index];
-                Paragraph original = Utilities.GetOriginalParagraph(index, paragraph, paragraphsOriginal);
-                Paragraph next = null;
-                if (index + 1 < paragraphs.Count)
-                {
-                    next = paragraphs[index + 1];
-                }
-                items[index] = MakeListViewItem(paragraph, next, original, font);
+                return;
             }
 
-            Items.AddRange(items);
-
-            if (UseSyntaxColoring && _settings != null)
+            if (!item.Font.Equals(rendered.Font))
             {
-                for (var index = 0; index < paragraphs.Count; index++)
-                {
-                    var paragraph = paragraphs[index];
-                    var item = items[index];
-                    SyntaxColorListViewItem(paragraphs, index, paragraph, item);
-                }
+                item.Font = rendered.Font;
             }
 
-            ListViewItemSorter = x;
-            EndUpdate();
-
-            if (FirstVisibleIndex == 0)
+            if (item.ForeColor != rendered.ForeColor)
             {
-                FirstVisibleIndex = -1;
+                item.ForeColor = rendered.ForeColor;
+            }
+
+            if (item.StateImageIndex != rendered.StateImageIndex)
+            {
+                item.StateImageIndex = rendered.StateImageIndex;
+            }
+
+            if (item.UseItemStyleForSubItems)
+            {
+                item.UseItemStyleForSubItems = false;
+            }
+
+            for (var index = 0; index < rendered.SubItems.Count; index++)
+            {
+                var cell = item.SubItems[index];
+                var updated = rendered.SubItems[index];
+                if (cell.Text != updated.Text)
+                {
+                    cell.Text = updated.Text;
+                }
+
+                if (cell.BackColor != BackColor)
+                {
+                    cell.BackColor = BackColor;
+                }
             }
         }
 
@@ -1357,10 +1901,17 @@ namespace Nikse.SubtitleEdit.Controls
         {
             if (UseSyntaxColoring && _settings != null)
             {
-                for (int index = 0; index < subtitle.Paragraphs.Count; index++)
+                BeginUpdate();
+                try
                 {
-                    var paragraph = subtitle.Paragraphs[index];
-                    SyntaxColorListViewItem(subtitle.Paragraphs, index, paragraph, Items[index]);
+                    for (var index = 0; index < subtitle.Paragraphs.Count; index++)
+                    {
+                        SyntaxColorListViewItem(subtitle.Paragraphs, index, subtitle.Paragraphs[index], Items[index]);
+                    }
+                }
+                finally
+                {
+                    EndUpdate();
                 }
             }
         }
@@ -1693,32 +2244,34 @@ namespace Nikse.SubtitleEdit.Controls
                 return;
             }
 
-            BeginUpdate();
-            SelectedIndices.Clear();
-
-            var selectedItem = Items[index];
-            selectedItem.Selected = true;
-            selectedItem.Focused = true;
-
-            var topIndex = topItem.Index;
             var itemHeight = GetItemRect(0).Height;
-            if (itemHeight == 0)
+            if (itemHeight <= 0)
             {
                 return;
             }
 
-            var numberOfVisibleItems = (Height - 30) / itemHeight;
-            var bottomIndex = topIndex + numberOfVisibleItems;
-            if (index >= bottomIndex)
+            BeginUpdate();
+            try
             {
-                Items[Math.Min(Items.Count - 1, index + numberOfVisibleItems / 2)].EnsureVisible();
-            }
-            else if (index < topIndex)
-            {
-                Items[Math.Max(0, index - numberOfVisibleItems / 2)].EnsureVisible();
-            }
+                SelectItem(index, true);
 
-            EndUpdate();
+                var topIndex = topItem.Index;
+                var numberOfVisibleItems = (Height - 30) / itemHeight;
+                var bottomIndex = topIndex + numberOfVisibleItems;
+                if (index >= bottomIndex)
+                {
+                    Items[Math.Min(Items.Count - 1, index + numberOfVisibleItems / 2)].EnsureVisible();
+                }
+                else if (index < topIndex)
+                {
+                    Items[Math.Max(0, index - numberOfVisibleItems / 2)].EnsureVisible();
+                }
+
+            }
+            finally
+            {
+                EndUpdate();
+            }
         }
 
         public void SelectIndexAndEnsureVisible(int index, bool focus)
@@ -1763,26 +2316,36 @@ namespace Nikse.SubtitleEdit.Controls
                 afterIndex = Items.Count - 1;
             }
 
-            SelectNone();
-            var currentItem = Items[index];
-            if (TopItem.Index <= beforeIndex && bottomIndex > afterIndex)
+            BeginUpdate();
+            try
             {
-                EnsureVisible(index);
-                currentItem.Selected = true;
-                if (focus)
+                if (TopItem.Index <= beforeIndex && bottomIndex > afterIndex)
                 {
-                    currentItem.Focused = true;
+                    EnsureVisible(index);
+                }
+                else
+                {
+                    EnsureVisible(beforeIndex);
+                    EnsureVisible(afterIndex);
                 }
 
-                return;
+                SelectItem(index, focus);
             }
-
-            EnsureVisible(beforeIndex);
-            EnsureVisible(afterIndex);
-            currentItem.Selected = true;
-            if (focus)
+            finally
             {
-                currentItem.Focused = true;
+                EndUpdate();
+            }
+        }
+
+        private void SelectItem(int index, bool focus)
+        {
+            var current = Items[index];
+            SelectNone();
+            current.Selected = true;
+
+            if (focus && !current.Focused)
+            {
+                current.Focused = true;
             }
         }
 
@@ -2085,31 +2648,35 @@ namespace Nikse.SubtitleEdit.Controls
 
             if (IsValidIndex(index))
             {
-                ListViewItem item = Items[index];
-                if (ColumnIndexStart >= 0)
-                {
-                    item.SubItems[ColumnIndexStart].Text = GetDisplayTime(paragraph.StartTime);
-                }
-
-                if (ColumnIndexEnd >= 0)
-                {
-                    item.SubItems[ColumnIndexEnd].Text = GetDisplayTime(paragraph.EndTime);
-                }
-
-                if (ColumnIndexDuration >= 0)
-                {
-                    item.SubItems[ColumnIndexDuration].Text = GetDisplayDuration(paragraph);
-                }
-
-                if (ColumnIndexGap >= 0)
-                {
-                    item.SubItems[ColumnIndexGap].Text = GetGap(paragraph, next);
-                }
-
-                UpdateCpsAndWpm(item, paragraph);
+                SetRowTiming(Items[index], paragraph, next);
             }
 
             SetGap(index - 1, prev, paragraph);
+        }
+
+        private void SetRowTiming(ListViewItem item, Paragraph paragraph, Paragraph next)
+        {
+            if (ColumnIndexStart >= 0)
+            {
+                item.SubItems[ColumnIndexStart].Text = GetDisplayTime(paragraph.StartTime);
+            }
+
+            if (ColumnIndexEnd >= 0)
+            {
+                item.SubItems[ColumnIndexEnd].Text = GetDisplayTime(paragraph.EndTime);
+            }
+
+            if (ColumnIndexDuration >= 0)
+            {
+                item.SubItems[ColumnIndexDuration].Text = GetDisplayDuration(paragraph);
+            }
+
+            if (ColumnIndexGap >= 0)
+            {
+                item.SubItems[ColumnIndexGap].Text = GetGap(paragraph, next);
+            }
+
+            UpdateCpsAndWpm(item, paragraph);
         }
 
         private void SetGap(int index, Paragraph paragraph, Paragraph next)
@@ -2378,6 +2945,7 @@ namespace Nikse.SubtitleEdit.Controls
                 _setLastColumnWidthTimer?.Dispose();
                 _syntaxColorLineTimer?.Dispose();
                 _setStartAndDurationTimer?.Dispose();
+                _mouseDragSelectTimer?.Dispose();
             }
         }
 

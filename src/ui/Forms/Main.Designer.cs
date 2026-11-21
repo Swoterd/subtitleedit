@@ -364,6 +364,14 @@ namespace Nikse.SubtitleEdit.Forms
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.groupBoxVideo = new System.Windows.Forms.GroupBox();
+            this.panelWaveform = new System.Windows.Forms.Panel();
+            this.panelWaveformHeader = new System.Windows.Forms.Panel();
+            this.panelWaveformSnapSettings = new System.Windows.Forms.FlowLayoutPanel();
+            this.checkBoxWaveformSnapAdjacent = new System.Windows.Forms.CheckBox();
+            this.panelWaveformSnapThreshold = new System.Windows.Forms.FlowLayoutPanel();
+            this.labelWaveformSnapThreshold = new System.Windows.Forms.Label();
+            this.numericUpDownWaveformSnapThreshold = new Nikse.SubtitleEdit.Controls.NikseUpDown();
+            this.labelWaveformSnapThresholdUnit = new System.Windows.Forms.Label();
             this.labelNextWord = new System.Windows.Forms.Label();
             this.audioVisualizer = new Nikse.SubtitleEdit.Controls.AudioVisualizer();
             this.checkBoxSyncListViewWithVideoWhilePlaying = new System.Windows.Forms.CheckBox();
@@ -458,6 +466,8 @@ namespace Nikse.SubtitleEdit.Forms
             this.splitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.mergeWithPreviousToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mergeWithNextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mergeDialogWithPreviousToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mergeDialogWithNextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator11 = new System.Windows.Forms.ToolStripSeparator();
             this.extendToPreviousToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.extendToNextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -487,6 +497,8 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelBookmark = new System.Windows.Forms.Label();
             this.textBoxListViewText = new Nikse.SubtitleEdit.Controls.SETextBox();
             this.contextMenuStripTextBoxListView = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemTextBoxMergeDialogWithPrevious = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItemTextBoxMergeDialogWithNext = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparatorSpellCheckSuggestions = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripMenuItemSpellCheckSkipOnce = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItemSpellCheckSkipAll = new System.Windows.Forms.ToolStripMenuItem();
@@ -594,6 +606,10 @@ namespace Nikse.SubtitleEdit.Forms
             this.menuStrip1.SuspendLayout();
             this.contextMenuStripListView.SuspendLayout();
             this.groupBoxVideo.SuspendLayout();
+            this.panelWaveform.SuspendLayout();
+            this.panelWaveformHeader.SuspendLayout();
+            this.panelWaveformSnapSettings.SuspendLayout();
+            this.panelWaveformSnapThreshold.SuspendLayout();
             this.contextMenuStripVideoFileName.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarWaveformPosition)).BeginInit();
             this.panelWaveformControls.SuspendLayout();
@@ -3181,7 +3197,7 @@ namespace Nikse.SubtitleEdit.Forms
             // 
             this.toolStripMenuItemSurroundWithMusicSymbols.Name = "toolStripMenuItemSurroundWithMusicSymbols";
             this.toolStripMenuItemSurroundWithMusicSymbols.Size = new System.Drawing.Size(284, 22);
-            this.toolStripMenuItemSurroundWithMusicSymbols.Text = "♪";
+            this.toolStripMenuItemSurroundWithMusicSymbols.Text = "Lyrics";
             this.toolStripMenuItemSurroundWithMusicSymbols.Click += new System.EventHandler(this.ToolStripMenuItemSurroundWithMusicSymbolsClick);
             // 
             // toolStripSeparator2
@@ -3328,9 +3344,7 @@ namespace Nikse.SubtitleEdit.Forms
             // 
             // groupBoxVideo
             // 
-            this.groupBoxVideo.Controls.Add(this.labelNextWord);
-            this.groupBoxVideo.Controls.Add(this.audioVisualizer);
-            this.groupBoxVideo.Controls.Add(this.checkBoxSyncListViewWithVideoWhilePlaying);
+            this.groupBoxVideo.Controls.Add(this.panelWaveform);
             this.groupBoxVideo.Controls.Add(this.labelVideoInfo);
             this.groupBoxVideo.Controls.Add(this.trackBarWaveformPosition);
             this.groupBoxVideo.Controls.Add(this.panelWaveformControls);
@@ -3345,12 +3359,92 @@ namespace Nikse.SubtitleEdit.Forms
             this.groupBoxVideo.TabIndex = 1;
             this.groupBoxVideo.TabStop = false;
             // 
+            // panelWaveform
+            //
+            this.panelWaveform.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom |
+                System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            this.panelWaveform.Controls.Add(this.labelNextWord);
+            this.panelWaveform.Controls.Add(this.audioVisualizer);
+            this.panelWaveform.Controls.Add(this.panelWaveformHeader);
+            this.panelWaveform.Location = new System.Drawing.Point(472, 32);
+            this.panelWaveform.Margin = new System.Windows.Forms.Padding(0);
+            this.panelWaveform.Name = "panelWaveform";
+            this.panelWaveform.Size = new System.Drawing.Size(499, 229);
+            this.panelWaveform.TabIndex = 6;
+            //
+            // panelWaveformHeader
+            //
+            this.panelWaveformHeader.AutoScroll = true;
+            this.panelWaveformHeader.Controls.Add(this.panelWaveformSnapSettings);
+            this.panelWaveformHeader.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelWaveformHeader.Height = 25;
+            this.panelWaveformHeader.Name = "panelWaveformHeader";
+            this.panelWaveformHeader.SizeChanged += new System.EventHandler(this.WaveformHeaderSizeChanged);
+            //
+            // panelWaveformSnapSettings
+            //
+            this.panelWaveformSnapSettings.AutoSize = true;
+            this.panelWaveformSnapSettings.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.panelWaveformSnapSettings.Controls.Add(this.checkBoxSyncListViewWithVideoWhilePlaying);
+            this.panelWaveformSnapSettings.Controls.Add(this.checkBoxWaveformSnapAdjacent);
+            this.panelWaveformSnapSettings.Controls.Add(this.panelWaveformSnapThreshold);
+            this.panelWaveformSnapSettings.Name = "panelWaveformSnapSettings";
+            this.panelWaveformSnapSettings.TabIndex = 0;
+            this.panelWaveformSnapSettings.WrapContents = false;
+            this.panelWaveformSnapSettings.SizeChanged += new System.EventHandler(this.WaveformHeaderSizeChanged);
+            //
+            // checkBoxWaveformSnapAdjacent
+            //
+            this.checkBoxWaveformSnapAdjacent.AutoSize = true;
+            this.checkBoxWaveformSnapAdjacent.Margin = new System.Windows.Forms.Padding(3, 5, 10, 3);
+            this.checkBoxWaveformSnapAdjacent.Name = "checkBoxWaveformSnapAdjacent";
+            this.checkBoxWaveformSnapAdjacent.TabIndex = 1;
+            this.checkBoxWaveformSnapAdjacent.Text = "Automatically snap adjacent subtitle boundaries";
+            this.checkBoxWaveformSnapAdjacent.UseVisualStyleBackColor = true;
+            this.checkBoxWaveformSnapAdjacent.CheckedChanged += new System.EventHandler(this.WaveformSnapSettingsChanged);
+            //
+            // panelWaveformSnapThreshold
+            //
+            this.panelWaveformSnapThreshold.AutoSize = true;
+            this.panelWaveformSnapThreshold.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.panelWaveformSnapThreshold.Controls.Add(this.labelWaveformSnapThreshold);
+            this.panelWaveformSnapThreshold.Controls.Add(this.numericUpDownWaveformSnapThreshold);
+            this.panelWaveformSnapThreshold.Controls.Add(this.labelWaveformSnapThresholdUnit);
+            this.panelWaveformSnapThreshold.Margin = new System.Windows.Forms.Padding(0);
+            this.panelWaveformSnapThreshold.Name = "panelWaveformSnapThreshold";
+            this.panelWaveformSnapThreshold.TabIndex = 2;
+            this.panelWaveformSnapThreshold.WrapContents = false;
+            //
+            // labelWaveformSnapThreshold
+            //
+            this.labelWaveformSnapThreshold.AutoSize = true;
+            this.labelWaveformSnapThreshold.Margin = new System.Windows.Forms.Padding(3, 6, 5, 0);
+            this.labelWaveformSnapThreshold.Name = "labelWaveformSnapThreshold";
+            this.labelWaveformSnapThreshold.Text = "Snap threshold";
+            //
+            // numericUpDownWaveformSnapThreshold
+            //
+            this.numericUpDownWaveformSnapThreshold.AccessibleName = "Snap threshold";
+            this.numericUpDownWaveformSnapThreshold.Margin = new System.Windows.Forms.Padding(0, 2, 4, 2);
+            this.numericUpDownWaveformSnapThreshold.Maximum = 2000;
+            this.numericUpDownWaveformSnapThreshold.Name = "numericUpDownWaveformSnapThreshold";
+            this.numericUpDownWaveformSnapThreshold.Size = new System.Drawing.Size(62, 21);
+            this.numericUpDownWaveformSnapThreshold.Value = 100;
+            this.numericUpDownWaveformSnapThreshold.ValueChanged += new System.EventHandler(this.WaveformSnapSettingsChanged);
+            //
+            // labelWaveformSnapThresholdUnit
+            //
+            this.labelWaveformSnapThresholdUnit.AutoSize = true;
+            this.labelWaveformSnapThresholdUnit.Margin = new System.Windows.Forms.Padding(0, 6, 3, 0);
+            this.labelWaveformSnapThresholdUnit.Name = "labelWaveformSnapThresholdUnit";
+            this.labelWaveformSnapThresholdUnit.Text = "ms";
+            //
             // labelNextWord
             // 
-            this.labelNextWord.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.labelNextWord.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
             this.labelNextWord.AutoSize = true;
             this.labelNextWord.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelNextWord.Location = new System.Drawing.Point(401, 9);
+            this.labelNextWord.Location = new System.Drawing.Point(0, 25);
             this.labelNextWord.Name = "labelNextWord";
             this.labelNextWord.Size = new System.Drawing.Size(71, 17);
             this.labelNextWord.TabIndex = 13;
@@ -3362,9 +3456,7 @@ namespace Nikse.SubtitleEdit.Forms
             this.audioVisualizer.AllowDrop = true;
             this.audioVisualizer.AllowNewSelection = true;
             this.audioVisualizer.AllowOverlap = false;
-            this.audioVisualizer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.audioVisualizer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.audioVisualizer.BackColor = System.Drawing.Color.Black;
             this.audioVisualizer.BackgroundColor = System.Drawing.Color.Black;
             this.audioVisualizer.Chapters = null;
@@ -3377,7 +3469,7 @@ namespace Nikse.SubtitleEdit.Forms
             this.audioVisualizer.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(155)))), ((int)(((byte)(155)))));
             this.audioVisualizer.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(20)))), ((int)(((byte)(18)))));
             this.audioVisualizer.InsertAtVideoPositionShortcut = System.Windows.Forms.Keys.Insert;
-            this.audioVisualizer.Location = new System.Drawing.Point(472, 32);
+            this.audioVisualizer.Location = new System.Drawing.Point(0, 25);
             this.audioVisualizer.Margin = new System.Windows.Forms.Padding(0);
             this.audioVisualizer.MouseWheelScrollUpIsForward = true;
             this.audioVisualizer.Move100MsLeft = System.Windows.Forms.Keys.None;
@@ -3392,10 +3484,10 @@ namespace Nikse.SubtitleEdit.Forms
             this.audioVisualizer.ShowGridLines = true;
             this.audioVisualizer.ShowSpectrogram = false;
             this.audioVisualizer.ShowWaveform = true;
-            this.audioVisualizer.Size = new System.Drawing.Size(499, 229);
+            this.audioVisualizer.Size = new System.Drawing.Size(499, 204);
             this.audioVisualizer.SpectrogramAlpha = 1F;
             this.audioVisualizer.StartPositionSeconds = 0D;
-            this.audioVisualizer.TabIndex = 6;
+            this.audioVisualizer.TabIndex = 1;
             this.audioVisualizer.TextBold = true;
             this.audioVisualizer.TextColor = System.Drawing.Color.Gray;
             this.audioVisualizer.TextSize = 9F;
@@ -3412,10 +3504,10 @@ namespace Nikse.SubtitleEdit.Forms
             // checkBoxSyncListViewWithVideoWhilePlaying
             // 
             this.checkBoxSyncListViewWithVideoWhilePlaying.AutoSize = true;
-            this.checkBoxSyncListViewWithVideoWhilePlaying.Location = new System.Drawing.Point(558, 11);
+            this.checkBoxSyncListViewWithVideoWhilePlaying.Margin = new System.Windows.Forms.Padding(3, 5, 10, 3);
             this.checkBoxSyncListViewWithVideoWhilePlaying.Name = "checkBoxSyncListViewWithVideoWhilePlaying";
             this.checkBoxSyncListViewWithVideoWhilePlaying.Size = new System.Drawing.Size(205, 17);
-            this.checkBoxSyncListViewWithVideoWhilePlaying.TabIndex = 1;
+            this.checkBoxSyncListViewWithVideoWhilePlaying.TabIndex = 0;
             this.checkBoxSyncListViewWithVideoWhilePlaying.Text = "Sync listview with movie when playing";
             this.checkBoxSyncListViewWithVideoWhilePlaying.UseVisualStyleBackColor = true;
             // 
@@ -4500,6 +4592,8 @@ namespace Nikse.SubtitleEdit.Forms
             this.splitToolStripMenuItem1,
             this.mergeWithPreviousToolStripMenuItem,
             this.mergeWithNextToolStripMenuItem,
+            this.mergeDialogWithPreviousToolStripMenuItem,
+            this.mergeDialogWithNextToolStripMenuItem,
             this.toolStripSeparator11,
             this.extendToPreviousToolStripMenuItem,
             this.extendToNextToolStripMenuItem,
@@ -4598,6 +4692,20 @@ namespace Nikse.SubtitleEdit.Forms
             this.mergeWithNextToolStripMenuItem.Size = new System.Drawing.Size(274, 22);
             this.mergeWithNextToolStripMenuItem.Text = "Merge with next";
             this.mergeWithNextToolStripMenuItem.Click += new System.EventHandler(this.MergeWithNextToolStripMenuItemClick);
+            // 
+            // mergeDialogWithPreviousToolStripMenuItem
+            // 
+            this.mergeDialogWithPreviousToolStripMenuItem.Name = "mergeDialogWithPreviousToolStripMenuItem";
+            this.mergeDialogWithPreviousToolStripMenuItem.Size = new System.Drawing.Size(274, 22);
+            this.mergeDialogWithPreviousToolStripMenuItem.Text = "Merge with previous as dialog";
+            this.mergeDialogWithPreviousToolStripMenuItem.Click += new System.EventHandler(this.MergeDialogWithPreviousToolStripMenuItemClick);
+            // 
+            // mergeDialogWithNextToolStripMenuItem
+            // 
+            this.mergeDialogWithNextToolStripMenuItem.Name = "mergeDialogWithNextToolStripMenuItem";
+            this.mergeDialogWithNextToolStripMenuItem.Size = new System.Drawing.Size(274, 22);
+            this.mergeDialogWithNextToolStripMenuItem.Text = "Merge with next as dialog";
+            this.mergeDialogWithNextToolStripMenuItem.Click += new System.EventHandler(this.MergeDialogWithNextToolStripMenuItemClick);
             // 
             // toolStripSeparator11
             // 
@@ -4975,6 +5083,8 @@ namespace Nikse.SubtitleEdit.Forms
             this.deleteToolStripMenuItem1,
             this.toolStripMenuItemSplitViaWaveform,
             this.toolStripMenuItemSplitTextAtCursor,
+            this.toolStripMenuItemTextBoxMergeDialogWithPrevious,
+            this.toolStripMenuItemTextBoxMergeDialogWithNext,
             this.toolStripSeparator15,
             this.selectAllToolStripMenuItem1,
             this.toolStripSeparator13,
@@ -4999,6 +5109,20 @@ namespace Nikse.SubtitleEdit.Forms
             this.contextMenuStripTextBoxListView.Closing += new System.Windows.Forms.ToolStripDropDownClosingEventHandler(this.ContextMenuStripTextBoxListViewClosing);
             this.contextMenuStripTextBoxListView.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuStripTextBoxListViewOpening);
             this.contextMenuStripTextBoxListView.Opened += new System.EventHandler(this.MenuOpened);
+            //
+            // toolStripMenuItemTextBoxMergeDialogWithPrevious
+            //
+            this.toolStripMenuItemTextBoxMergeDialogWithPrevious.Name = "toolStripMenuItemTextBoxMergeDialogWithPrevious";
+            this.toolStripMenuItemTextBoxMergeDialogWithPrevious.Size = new System.Drawing.Size(272, 22);
+            this.toolStripMenuItemTextBoxMergeDialogWithPrevious.Text = "Merge with previous as dialog";
+            this.toolStripMenuItemTextBoxMergeDialogWithPrevious.Click += new System.EventHandler(this.TextBoxMergeDialogWithPreviousClick);
+            //
+            // toolStripMenuItemTextBoxMergeDialogWithNext
+            //
+            this.toolStripMenuItemTextBoxMergeDialogWithNext.Name = "toolStripMenuItemTextBoxMergeDialogWithNext";
+            this.toolStripMenuItemTextBoxMergeDialogWithNext.Size = new System.Drawing.Size(272, 22);
+            this.toolStripMenuItemTextBoxMergeDialogWithNext.Text = "Merge with next as dialog";
+            this.toolStripMenuItemTextBoxMergeDialogWithNext.Click += new System.EventHandler(this.TextBoxMergeDialogWithNextClick);
             // 
             // toolStripSeparatorSpellCheckSuggestions
             // 
@@ -5355,7 +5479,7 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelOriginalSingleLinePixels.Name = "labelOriginalSingleLinePixels";
             this.labelOriginalSingleLinePixels.Size = new System.Drawing.Size(62, 13);
             this.labelOriginalSingleLinePixels.TabIndex = 43;
-            this.labelOriginalSingleLinePixels.Text = "AltSinLinPix";
+            this.labelOriginalSingleLinePixels.Text = string.Empty;
             // 
             // labelSingleLinePixels
             // 
@@ -5396,7 +5520,7 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelOriginalSingleLine.Name = "labelOriginalSingleLine";
             this.labelOriginalSingleLine.Size = new System.Drawing.Size(48, 13);
             this.labelOriginalSingleLine.TabIndex = 36;
-            this.labelOriginalSingleLine.Text = "AltSinLin";
+            this.labelOriginalSingleLine.Text = string.Empty;
             // 
             // labelStartTimeWarning
             // 
@@ -5427,7 +5551,7 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelOriginalCharactersPerSecond.Name = "labelOriginalCharactersPerSecond";
             this.labelOriginalCharactersPerSecond.Size = new System.Drawing.Size(64, 13);
             this.labelOriginalCharactersPerSecond.TabIndex = 38;
-            this.labelOriginalCharactersPerSecond.Text = "altCharsSec";
+            this.labelOriginalCharactersPerSecond.Text = string.Empty;
             // 
             // labelTextOriginalLineTotal
             // 
@@ -5437,7 +5561,7 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelTextOriginalLineTotal.Name = "labelTextOriginalLineTotal";
             this.labelTextOriginalLineTotal.Size = new System.Drawing.Size(35, 13);
             this.labelTextOriginalLineTotal.TabIndex = 37;
-            this.labelTextOriginalLineTotal.Text = "AltTot";
+            this.labelTextOriginalLineTotal.Text = string.Empty;
             // 
             // labelTextOriginalLineLengths
             // 
@@ -5447,7 +5571,7 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelTextOriginalLineLengths.Name = "labelTextOriginalLineLengths";
             this.labelTextOriginalLineLengths.Size = new System.Drawing.Size(57, 13);
             this.labelTextOriginalLineLengths.TabIndex = 35;
-            this.labelTextOriginalLineLengths.Text = "AltLineLen";
+            this.labelTextOriginalLineLengths.Text = string.Empty;
             // 
             // labelOriginalText
             // 
@@ -5501,10 +5625,11 @@ namespace Nikse.SubtitleEdit.Forms
             this.textBoxListViewTextOriginal.TextBoxFont = new System.Drawing.Font("Tahoma", 12F, System.Drawing.FontStyle.Bold);
             this.textBoxListViewTextOriginal.UseSystemPasswordChar = false;
             this.textBoxListViewTextOriginal.Visible = false;
-            this.textBoxListViewTextOriginal.TextChanged += new System.EventHandler(this.textBoxListViewTextOriginal_TextChanged);
+            this.textBoxListViewTextOriginal.TextChanged += new System.EventHandler(this.TextBoxListViewTextOriginalTextChanged);
             this.textBoxListViewTextOriginal.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextBoxListViewTextOriginalKeyDown);
             this.textBoxListViewTextOriginal.MouseClick += new System.Windows.Forms.MouseEventHandler(this.TextBoxListViewTextOriginalMouseClick);
             this.textBoxListViewTextOriginal.Enter += new System.EventHandler(this.TextBoxListViewTextOriginalEnter);
+            this.textBoxListViewTextOriginal.Leave += new System.EventHandler(this.TextBoxListViewTextOriginalLeave);
             this.textBoxListViewTextOriginal.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TextBoxListViewTextOriginalKeyUp);
             this.textBoxListViewTextOriginal.MouseMove += new System.Windows.Forms.MouseEventHandler(this.TextBoxListViewTextOriginalMouseMove);
             // 
@@ -5973,6 +6098,14 @@ namespace Nikse.SubtitleEdit.Forms
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.contextMenuStripListView.ResumeLayout(false);
+            this.panelWaveformSnapThreshold.ResumeLayout(false);
+            this.panelWaveformSnapThreshold.PerformLayout();
+            this.panelWaveformSnapSettings.ResumeLayout(false);
+            this.panelWaveformSnapSettings.PerformLayout();
+            this.panelWaveformHeader.ResumeLayout(false);
+            this.panelWaveformHeader.PerformLayout();
+            this.panelWaveform.ResumeLayout(false);
+            this.panelWaveform.PerformLayout();
             this.groupBoxVideo.ResumeLayout(false);
             this.groupBoxVideo.PerformLayout();
             this.contextMenuStripVideoFileName.ResumeLayout(false);
@@ -6219,6 +6352,14 @@ namespace Nikse.SubtitleEdit.Forms
         private System.Windows.Forms.ToolStripButton toolStripButtonLayout;
         private Controls.VideoPlayerContainer mediaPlayer;
         private System.Windows.Forms.Panel panelVideoPlayer;
+        private System.Windows.Forms.Panel panelWaveform;
+        private System.Windows.Forms.Panel panelWaveformHeader;
+        private System.Windows.Forms.FlowLayoutPanel panelWaveformSnapSettings;
+        private System.Windows.Forms.CheckBox checkBoxWaveformSnapAdjacent;
+        private System.Windows.Forms.FlowLayoutPanel panelWaveformSnapThreshold;
+        private System.Windows.Forms.Label labelWaveformSnapThreshold;
+        private Controls.NikseUpDown numericUpDownWaveformSnapThreshold;
+        private System.Windows.Forms.Label labelWaveformSnapThresholdUnit;
         public Controls.AudioVisualizer audioVisualizer;
         private System.Windows.Forms.Timer timerWaveform;
         private System.Windows.Forms.ContextMenuStrip contextMenuStripWaveform;
@@ -6227,6 +6368,8 @@ namespace Nikse.SubtitleEdit.Forms
         private System.Windows.Forms.ToolStripMenuItem splitToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem mergeWithPreviousToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem mergeWithNextToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mergeDialogWithPreviousToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mergeDialogWithNextToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemWaveformPlaySelection;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
         private System.Windows.Forms.Panel panelWaveformControls;
@@ -6274,6 +6417,8 @@ namespace Nikse.SubtitleEdit.Forms
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator21;
         private System.Windows.Forms.ToolStripMenuItem editSelectAllToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStripTextBoxListView;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemTextBoxMergeDialogWithPrevious;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemTextBoxMergeDialogWithNext;
         private System.Windows.Forms.ToolStripMenuItem cutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
@@ -6573,3 +6718,4 @@ namespace Nikse.SubtitleEdit.Forms
         private ToolStripMenuItem toolStripMenuItemCombineWaveformAndSpectrogram;
     }
 }
+

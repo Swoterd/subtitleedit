@@ -1,4 +1,5 @@
-﻿using Nikse.SubtitleEdit.Core.Common;
+﻿using Nikse.SubtitleEdit.Logic;
+using Nikse.SubtitleEdit.Core.Common;
 using Nikse.SubtitleEdit.Core.SubtitleFormats;
 using Nikse.SubtitleEdit.Forms.Options;
 using Nikse.SubtitleEdit.Logic.SeJob;
@@ -147,7 +148,7 @@ namespace Nikse.SubtitleEdit.Forms.SeJobs
         {
             using (var openFileDialog = new OpenFileDialog { Filter = "se-job files|*.se-job" })
             {
-                if (openFileDialog.ShowDialog() != DialogResult.OK)
+                if (openFileDialog.ShowDialogWithLastFolder("SeJobExport.buttonImport") != DialogResult.OK)
                 {
                     return;
                 }

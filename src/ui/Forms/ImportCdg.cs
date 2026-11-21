@@ -237,7 +237,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.Filter = "Images|*.png;*.jpg";
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ImportCdg.buttonChooseBackgroundImage", this) != DialogResult.OK)
             {
                 return;
             }
@@ -319,7 +319,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.Filter = "Audio files|*.mp3;*.ogg";
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ImportCdg.buttonAudioFileBrowse", this) != DialogResult.OK)
             {
                 return;
             }
@@ -354,7 +354,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = "MKVToolNix mkvmerge (mkvmerge.exe)|mkvmerge.exe";
-            if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ImportCdg.buttonBrowseToFFmpeg", this) != DialogResult.OK)
             {
                 return;
             }

@@ -1986,7 +1986,7 @@ $DROP=[DROPVALUE]" + Environment.NewLine + Environment.NewLine +
                                      "BdnXml|*.xml|" +
                                      "TTML base64 inline images|*.ttml|" +
                                      "All files|*.*";
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("BinEdit.openFileToolStripMenuItem", this) == DialogResult.OK)
             {
                 OpenBinSubtitle(openFileDialog1.FileName);
             }
@@ -2208,7 +2208,7 @@ $DROP=[DROPVALUE]" + Environment.NewLine + Environment.NewLine +
             openFileDialog1.Title = LanguageSettings.Current.General.OpenSubtitle;
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("BinEdit.importTimeCodesToolStripMenuItem", this) == DialogResult.OK)
             {
                 var timeCodeSubtitle = new Subtitle();
                 SubtitleFormat format = null;
@@ -2391,7 +2391,7 @@ $DROP=[DROPVALUE]" + Environment.NewLine + Environment.NewLine +
                 openFileDialog1.InitialDirectory = _exportImageFolder;
             }
 
-            var result = openFileDialog1.ShowDialog(this);
+            var result = openFileDialog1.ShowDialogWithLastFolder("BinEdit.buttonImportImage", this);
             if (result == DialogResult.OK)
             {
                 var idx = subtitleListView1.SelectedItems[0].Index;
@@ -2485,7 +2485,7 @@ $DROP=[DROPVALUE]" + Environment.NewLine + Environment.NewLine +
             openFileDialog1.Title = LanguageSettings.Current.Main.OpenBluRaySupFile;
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = LanguageSettings.Current.Main.BluRaySupFiles + "|*.sup";
-            if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("BinEdit.insertSubtitleAfterThisLineToolStripMenuItem", this) != DialogResult.OK)
             {
                 return;
             }
@@ -2731,7 +2731,7 @@ $DROP=[DROPVALUE]" + Environment.NewLine + Environment.NewLine +
             openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
 
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog() != DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("BinEdit.openVideoToolStripMenuItem") != DialogResult.OK)
             {
                 return;
             }

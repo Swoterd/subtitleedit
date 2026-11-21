@@ -50,7 +50,7 @@ namespace Nikse.SubtitleEdit.Forms.Ocr
             openFileDialog1.Filter = "Binary OCR db files|*.db";
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.InitialDirectory = Configuration.OcrDirectory;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("VobSubCharactersImport.VobSubCharactersImport", this) == DialogResult.OK)
             {
                 imageList1.ImageSize = new Size(40, 40);
                 LoadImagesInListView();

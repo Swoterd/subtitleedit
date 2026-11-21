@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using Nikse.SubtitleEdit.Core.Common;
@@ -90,6 +90,7 @@ namespace Nikse.SubtitleEdit.Core.Settings
         public string CpsLineLengthStrategy { get; set; }
         public double SubtitleMaximumWordsPerMinute { get; set; }
         public DialogType DialogStyle { get; set; }
+        public bool MergeLinesSeparateWithLineBreak { get; set; }
         public ContinuationStyle ContinuationStyle { get; set; }
         public int ContinuationPause { get; set; }
         public string CustomContinuationStyleSuffix { get; set; }
@@ -117,6 +118,16 @@ namespace Nikse.SubtitleEdit.Core.Settings
         public int VideoPlayerPreviewFontSize { get; set; }
         public int VideoPlayerPreviewBoxHeight { get; set; }
         public bool VideoPlayerPreviewFontBold { get; set; }
+        public bool VideoPlayerPreviewTranslationModeTwoSubtitles { get; set; }
+        public string VideoPlayerPreviewTranslationFontName { get; set; }
+        public int VideoPlayerPreviewTranslationFontSize { get; set; }
+        public bool VideoPlayerPreviewTranslationFontBold { get; set; }
+        public string VideoPlayerPreviewOriginalFontName { get; set; }
+        public int VideoPlayerPreviewOriginalFontSize { get; set; }
+        public bool VideoPlayerPreviewOriginalFontBold { get; set; }
+        public Color VideoPlayerPreviewTextColor { get; set; }
+        public Color VideoPlayerPreviewTranslationTextColor { get; set; }
+        public Color VideoPlayerPreviewOriginalTextColor { get; set; }
         public bool VideoPlayerShowStopButton { get; set; }
         public bool VideoPlayerShowFullscreenButton { get; set; }
         public bool VideoPlayerShowMuteButton { get; set; }
@@ -136,6 +147,7 @@ namespace Nikse.SubtitleEdit.Core.Settings
         public int AutoBackupDeleteAfterMonths { get; set; }
         public string SpellChecker { get; set; }
         public bool AllowEditOfOriginalSubtitle { get; set; }
+        public bool AlignOriginalSubtitleTimingOnOpen { get; set; }
         public bool PromptDeleteLines { get; set; }
         public bool Undocked { get; set; }
         public string UndockedVideoPosition { get; set; }
@@ -319,6 +331,7 @@ namespace Nikse.SubtitleEdit.Core.Settings
             SubtitleOptimalCharactersPerSeconds = 15.0;
             SubtitleMaximumWordsPerMinute = 400;
             DialogStyle = DialogType.DashBothLinesWithSpace;
+            MergeLinesSeparateWithLineBreak = false;
             ContinuationStyle = ContinuationStyle.None;
             ContinuationPause = 300;
             CustomContinuationStyleSuffix = "";
@@ -346,13 +359,23 @@ namespace Nikse.SubtitleEdit.Core.Settings
             VideoPlayerPreviewFontSize = 12;
             VideoPlayerPreviewBoxHeight = 57;
             VideoPlayerPreviewFontBold = true;
+            VideoPlayerPreviewTranslationModeTwoSubtitles = true;
+            VideoPlayerPreviewTranslationFontName = "Tahoma";
+            VideoPlayerPreviewTranslationFontSize = 12;
+            VideoPlayerPreviewTranslationFontBold = true;
+            VideoPlayerPreviewOriginalFontName = "Tahoma";
+            VideoPlayerPreviewOriginalFontSize = 12;
+            VideoPlayerPreviewOriginalFontBold = true;
+            VideoPlayerPreviewTextColor = Color.White;
+            VideoPlayerPreviewTranslationTextColor = Color.White;
+            VideoPlayerPreviewOriginalTextColor = Color.White;
             VideoPlayerShowStopButton = true;
             VideoPlayerShowMuteButton = true;
             VideoPlayerShowFullscreenButton = true;
             ListViewLineSeparatorString = "<br />";
             ListViewDoubleClickAction = 1;
             SaveAsUseFileNameFrom = "video";
-            UppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWZYXÆØÃÅÄÖÉÈÁÂÀÇÊÍÓÔÕÚŁАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯĞİŞÜÙÁÌÑÎΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ";
+            UppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWZYX脝脴脙脜脛脰脡脠脕脗脌脟脢脥脫脭脮脷艁袗袘袙袚袛袝衼袞袟袠袡袣袥袦袧袨袩袪小孝校肖啸笑效楔些歇蝎鞋协挟携臑陌艦脺脵脕脤脩脦螒螔螕螖螘螙螚螛螜螝螞螠螡螢螣螤巍危韦违桅围唯惟";
             DefaultAdjustMilliseconds = 1000;
             AutoRepeatOn = true;
             AutoRepeatCount = 2;
@@ -429,7 +452,7 @@ namespace Nikse.SubtitleEdit.Core.Settings
             MeasurementConverterCategories = "Length;Kilometers;Meters";
             PreviewAssaText = "ABCDEFGHIJKL abcdefghijkl 123";
             TagsInToggleHiTags = "[;]";
-            TagsInToggleCustomTags = "(Æ)";
+            TagsInToggleCustomTags = "(脝)";
             SubtitleTextBoxMaxHeight = 300;
             ShowBetaStuff = false;
             DebugTranslationSync = false;

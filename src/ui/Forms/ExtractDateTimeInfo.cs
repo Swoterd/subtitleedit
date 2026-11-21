@@ -66,7 +66,7 @@ namespace Nikse.SubtitleEdit.Forms
 
         private void buttonOpenVideo_Click(object sender, EventArgs e)
         {
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ExtractDateTimeInfo.buttonOpenVideo", this) == DialogResult.OK)
             {
                 VideoFileName = openFileDialog1.FileName;
                 labelVideoFileName.Text = VideoFileName;

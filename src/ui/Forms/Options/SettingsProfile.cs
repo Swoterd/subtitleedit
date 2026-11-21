@@ -394,7 +394,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             openFileDialogImport.Title = LanguageSettings.Current.Settings.ImportProfiles;
             openFileDialogImport.InitialDirectory = Configuration.DataDirectory;
             openFileDialogImport.Filter = LanguageSettings.Current.Settings.Profiles + "|*.profile";
-            if (openFileDialogImport.ShowDialog(this) != DialogResult.OK)
+            if (openFileDialogImport.ShowDialogWithLastFolder("SettingsProfile.buttonImport", this) != DialogResult.OK)
             {
                 return;
             }

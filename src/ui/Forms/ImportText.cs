@@ -193,7 +193,7 @@ namespace Nikse.SubtitleEdit.Forms
 
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Multiselect = checkBoxMultipleFiles.Visible && checkBoxMultipleFiles.Checked;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ImportText.ButtonOpenText") == DialogResult.OK)
             {
                 groupBoxImportOptions.Visible = true;
                 _startFromNumber = 1;
@@ -1402,7 +1402,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.Title = LanguageSettings.Current.Main.OpenAnsiSubtitle;
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ImportText.buttonBrowseEncoding", this) == DialogResult.OK)
             {
                 using (var chooseEncoding = new ChooseEncoding())
                 {

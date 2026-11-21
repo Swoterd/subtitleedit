@@ -301,7 +301,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = Path.GetFileName(_videoFileName);
             }
 
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("SubStationAlphaProperties.buttonGetResolutionFromVideo") == DialogResult.OK)
             {
                 var info = UiUtil.GetVideoInfo(openFileDialog1.FileName);
                 if (info != null && info.Success)

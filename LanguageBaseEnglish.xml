@@ -2432,6 +2432,7 @@ can edit in same subtitle file (collaboration)</Information>
     <CheckForUpdates>Check for updates</CheckForUpdates>
     <AutoSave>Auto save</AutoSave>
     <AllowEditOfOriginalSubtitle>Allow edit of original subtitle</AllowEditOfOriginalSubtitle>
+    <AlignOriginalSubtitleTimingOnOpen>Align original subtitle timing to the main subtitle when opened</AlignOriginalSubtitleTimingOnOpen>
     <PromptDeleteLines>Prompt for delete lines</PromptDeleteLines>
     <TimeCodeMode>Time code mode</TimeCodeMode>
     <TimeCodeModeHHMMSSMS>HH:MM:SS.MS (00:00:01.500)</TimeCodeModeHHMMSSMS>
@@ -2466,11 +2467,14 @@ can edit in same subtitle file (collaboration)</Information>
     <WaveformShowWpm>Show words/min</WaveformShowWpm>
     <ReverseMouseWheelScrollDirection>Reverse mouse wheel scroll direction</ReverseMouseWheelScrollDirection>
     <WaveformAllowOverlap>Allow overlap (when moving/resizing)</WaveformAllowOverlap>
+    <WaveformAutoLinkAdjacentBoundaries>Automatically snap adjacent subtitle boundaries</WaveformAutoLinkAdjacentBoundaries>
+    <WaveformAutoLinkAdjacentBoundariesThreshold>Snap threshold</WaveformAutoLinkAdjacentBoundariesThreshold>
     <WaveformSetVideoPosMoveStartEnd>Set video position when moving start/end</WaveformSetVideoPosMoveStartEnd>
     <WaveformFocusMouseEnter>Set focus on mouse enter</WaveformFocusMouseEnter>
     <WaveformListViewFocusMouseEnter>Also set list view focus on mouse enter in list view</WaveformListViewFocusMouseEnter>
     <WaveformSingleClickSelect>Single click to select subtitles</WaveformSingleClickSelect>
     <WaveformSnapToShotChanges>Snap to shot changes (hold Shift to override)</WaveformSnapToShotChanges>
+    <SpectrogramAegisubMode>Aegisub mode: show video keyframes/I-frames in spectrogram</SpectrogramAegisubMode>
     <WaveformEditShotChangesProfile>Edit profile...</WaveformEditShotChangesProfile>
     <WaveformAutoGen>Auto generate waveform when opening video</WaveformAutoGen>
     <WaveformBorderHitMs1>Border marker hit must be within</WaveformBorderHitMs1>
@@ -2676,7 +2680,7 @@ can edit in same subtitle file (collaboration)</Information>
     <ToggleQuotes>Toggle quotes</ToggleQuotes>
     <ToggleHiTags>Toggle HI tags</ToggleHiTags>
     <ToggleCustomTags>Toggle custom tags (surround with)</ToggleCustomTags>
-    <ToggleMusicSymbols>Toggle music symbols</ToggleMusicSymbols>
+    <ToggleMusicSymbols>Lyrics</ToggleMusicSymbols>
     <Alignment>Alignment (selected lines)</Alignment>
     <AlignmentN1>Alignment bottom left - {\an1}</AlignmentN1>
     <AlignmentN2>Alignment bottom center - {\an2}</AlignmentN2>
@@ -3441,6 +3445,8 @@ Keep changes?</KeepChangesMessage>
     <SplitAtCursor>Split at cursor</SplitAtCursor>
     <MergeWithPrevious>Merge with previous</MergeWithPrevious>
     <MergeWithNext>Merge with next</MergeWithNext>
+    <MergeWithPreviousAsDialog>Merge with previous as dialog</MergeWithPreviousAsDialog>
+    <MergeWithNextAsDialog>Merge with next as dialog</MergeWithNextAsDialog>
     <RunWhisperSelectedParagraph>Run Whisper on selected paragraph...</RunWhisperSelectedParagraph>
     <ExtendToPrevious>Extend to previous</ExtendToPrevious>
     <ExtendToNext>Extend to next</ExtendToNext>

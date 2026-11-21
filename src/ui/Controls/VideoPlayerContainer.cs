@@ -6,6 +6,7 @@ using Nikse.SubtitleEdit.Logic;
 using Nikse.SubtitleEdit.Logic.VideoPlayers;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
@@ -56,14 +57,117 @@ namespace Nikse.SubtitleEdit.Controls
             }
         }
 
+        private sealed class TranslationPreviewOverlayForm : Form
+        {
+            private string _mainText = string.Empty;
+            private string _originalText = string.Empty;
+            private float _fontSizeFactor = 1.0F;
+
+            public TranslationPreviewOverlayForm()
+            {
+                FormBorderStyle = FormBorderStyle.None;
+                ShowInTaskbar = false;
+                StartPosition = FormStartPosition.Manual;
+                BackColor = Color.FromArgb(1, 1, 1);
+                TransparencyKey = Color.FromArgb(1, 1, 1);
+                DoubleBuffered = true;
+            }
+
+            protected override bool ShowWithoutActivation => true;
+
+            protected override CreateParams CreateParams
+            {
+                get
+                {
+                    const int wsExTransparent = 0x00000020;
+                    const int wsExToolWindow = 0x00000080;
+                    const int wsExNoActivate = 0x08000000;
+                    var cp = base.CreateParams;
+                    cp.ExStyle |= wsExTransparent | wsExToolWindow | wsExNoActivate;
+                    return cp;
+                }
+            }
+
+            public void SetText(string mainText, string originalText, float fontSizeFactor)
+            {
+                _mainText = HtmlUtil.RemoveHtmlTags(mainText ?? string.Empty);
+                _originalText = HtmlUtil.RemoveHtmlTags(originalText ?? string.Empty);
+                _fontSizeFactor = fontSizeFactor;
+                Invalidate();
+            }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);
+
+                var gs = Configuration.Settings.General;
+                var mainFontName = string.IsNullOrWhiteSpace(gs.VideoPlayerPreviewTranslationFontName) ? gs.VideoPlayerPreviewFontName : gs.VideoPlayerPreviewTranslationFontName;
+                var mainFontSize = gs.VideoPlayerPreviewTranslationFontSize <= 0 ? gs.VideoPlayerPreviewFontSize : gs.VideoPlayerPreviewTranslationFontSize;
+                var mainTextColor = gs.VideoPlayerPreviewTranslationTextColor.IsEmpty ? gs.VideoPlayerPreviewTextColor : gs.VideoPlayerPreviewTranslationTextColor;
+                var mainBold = gs.VideoPlayerPreviewTranslationFontBold;
+                if (string.IsNullOrEmpty(_originalText))
+                {
+                    mainFontName = gs.VideoPlayerPreviewFontName;
+                    mainFontSize = gs.VideoPlayerPreviewFontSize;
+                    mainTextColor = gs.VideoPlayerPreviewTextColor;
+                    mainBold = gs.VideoPlayerPreviewFontBold;
+                }
+
+                using (var mainFont = new Font(mainFontName, mainFontSize * _fontSizeFactor, mainBold ? FontStyle.Bold : FontStyle.Regular))
+                using (var originalFont = new Font(gs.VideoPlayerPreviewOriginalFontName, gs.VideoPlayerPreviewOriginalFontSize * _fontSizeFactor, gs.VideoPlayerPreviewOriginalFontBold ? FontStyle.Bold : FontStyle.Regular))
+                using (var mainBrush = new SolidBrush(mainTextColor))
+                using (var originalBrush = new SolidBrush(gs.VideoPlayerPreviewOriginalTextColor))
+                using (var shadowBrush = new SolidBrush(Color.FromArgb(180, Color.Black)))
+                using (var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Near })
+                {
+                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    var textWidth = Math.Max(1, ClientSize.Width - 24);
+                    var mainSize = e.Graphics.MeasureString(_mainText, mainFont, textWidth, format);
+                    var originalSize = e.Graphics.MeasureString(_originalText, originalFont, textWidth, format);
+                    const float lineGap = 0;
+                    var totalHeight = mainSize.Height + originalSize.Height + lineGap;
+                    var y = Math.Max(0, ClientSize.Height - totalHeight - 10);
+                    var mainRect = new RectangleF(12, y, textWidth, mainSize.Height);
+                    var originalRect = new RectangleF(12, y + mainSize.Height + lineGap, textWidth, originalSize.Height);
+
+                    DrawOutlinedString(e.Graphics, _mainText, mainFont, shadowBrush, mainBrush, mainRect, format);
+                    DrawOutlinedString(e.Graphics, _originalText, originalFont, shadowBrush, originalBrush, originalRect, format);
+                }
+            }
+
+            private static void DrawOutlinedString(Graphics graphics, string text, Font font, Brush outlineBrush, Brush textBrush, RectangleF rect, StringFormat format)
+            {
+                if (string.IsNullOrEmpty(text))
+                {
+                    return;
+                }
+
+                using (var path = new GraphicsPath())
+                using (var pen = new Pen(outlineBrush, Math.Max(2.2f, font.Size / 8f)) { LineJoin = LineJoin.Round })
+                {
+                    var emSize = font.SizeInPoints * graphics.DpiY / 72f;
+                    path.AddString(text, font.FontFamily, (int)font.Style, emSize, rect, format);
+                    graphics.DrawPath(pen, path);
+                    graphics.FillPath(textBrush, path);
+                }
+            }
+        }
+
         public event EventHandler OnButtonClicked;
         public event EventHandler OnEmptyPlayerClicked;
         public event EventHandler OnPlayerClicked;
 
         public DoubleBufferedPanel PanelPlayer { get; private set; }
         private Panel _panelSubtitle;
+        private TranslationPreviewOverlayForm _translationPreviewOverlay;
+        private Form _translationPreviewOverlayOwner;
         private string _subtitleText = string.Empty;
+        private string _subtitleTextOriginal = string.Empty;
+        private bool _translationPreviewActive;
+        private Size _lastLoggedContainerSize = Size.Empty;
+        private Size _lastLoggedPanelPlayerSize = Size.Empty;
         private VideoPlayer _videoPlayer;
+        private bool _previewAppearanceChanged;
 
         public float FontSizeFactor { get; set; }
 
@@ -238,7 +342,7 @@ namespace Nikse.SubtitleEdit.Controls
             BorderStyle = BorderStyle.None;
             _resources = new System.ComponentModel.ComponentResourceManager(typeof(VideoPlayerContainer));
             _labelVolume.Text = Configuration.Settings.General.VideoPlayerDefaultVolume + "%";
-            BackColor = _backgroundColor;
+            BackColor = Color.Black;
             Controls.Add(MakePlayerPanel());
             Controls.Add(MakeSubtitlesPanel());
             Controls.Add(MakeControlsPanel());
@@ -458,10 +562,10 @@ namespace Nikse.SubtitleEdit.Controls
 
         private Control MakeSubtitlesPanel()
         {
-            _panelSubtitle = new Panel { BackColor = _backgroundColor, Left = 0, Top = 0, Height = _subtitlesHeight + 1 };
+            _panelSubtitle = new Panel { BackColor = Color.Black, Left = 0, Top = 0, Height = _subtitlesHeight + 1 };
             TextBox = new RichTextBoxViewOnly();
             _panelSubtitle.Controls.Add(TextBox);
-            TextBox.BackColor = _backgroundColor;
+            TextBox.BackColor = Color.Black;
             TextBox.ForeColor = Color.White;
             TextBox.Dock = DockStyle.Fill;
             SetSubtitleFont();
@@ -469,7 +573,7 @@ namespace Nikse.SubtitleEdit.Controls
             return _panelSubtitle;
         }
 
-        public void SetSubtitleFont()
+        public void SetSubtitleFont(bool refreshPreview = true)
         {
             var gs = Configuration.Settings.General;
             if (string.IsNullOrEmpty(gs.SubtitleFontName))
@@ -477,16 +581,21 @@ namespace Nikse.SubtitleEdit.Controls
                 gs.SubtitleFontName = "Tahoma";
             }
 
-            if (gs.VideoPlayerPreviewFontBold)
+            var style = gs.VideoPlayerPreviewFontBold ? FontStyle.Bold : FontStyle.Regular;
+            var font = new Font(gs.VideoPlayerPreviewFontName, gs.VideoPlayerPreviewFontSize * FontSizeFactor, style);
+            if (!TextBox.Font.Equals(font))
             {
-                TextBox.Font = new Font(gs.VideoPlayerPreviewFontName, gs.VideoPlayerPreviewFontSize * FontSizeFactor, FontStyle.Bold);
+                TextBox.Font = font;
             }
             else
             {
-                TextBox.Font = new Font(gs.VideoPlayerPreviewFontName, gs.VideoPlayerPreviewFontSize * FontSizeFactor, FontStyle.Regular);
+                font.Dispose();
             }
 
-            SubtitleText = _subtitleText;
+            if (refreshPreview)
+            {
+                SetSubtitleTextBox(_subtitleText, _subtitleTextOriginal, _translationPreviewActive);
+            }
         }
 
         private void SubtitleTextBoxMouseClick(object sender, MouseEventArgs e)
@@ -497,11 +606,33 @@ namespace Nikse.SubtitleEdit.Controls
 
         public Paragraph LastParagraph { get; set; }
 
+        internal void RefreshPreviewAppearance() => _previewAppearanceChanged = true;
+
+        internal bool IsSubtitlePreviewCurrent(Paragraph paragraph, string text, string originalText, bool translationPreview)
+        {
+            return !_previewAppearanceChanged &&
+                   LastParagraph == paragraph &&
+                   _subtitleText == text &&
+                   _subtitleTextOriginal == originalText &&
+                   _translationPreviewActive == translationPreview;
+        }
+
         public void SetSubtitleText(string text, Paragraph p, Subtitle subtitle, SubtitleFormat format)
         {
+            SetSubtitleText(text, string.Empty, p, subtitle, format, false);
+        }
+
+        public void SetSubtitleText(string text, string originalText, Paragraph p, Subtitle subtitle, SubtitleFormat format)
+        {
+            SetSubtitleText(text, originalText, p, subtitle, format, true);
+        }
+
+        private void SetSubtitleText(string text, string originalText, Paragraph p, Subtitle subtitle, SubtitleFormat format, bool translationPreview)
+        {
+            _previewAppearanceChanged = false;
             var mpv = VideoPlayer as LibMpvDynamic;
             LastParagraph = p;
-            if (mpv != null && Configuration.Settings.General.MpvHandlesPreviewText && VideoHeight > 0 && VideoWidth > 0)
+            if (mpv != null && !translationPreview && Configuration.Settings.General.MpvHandlesPreviewText && VideoHeight > 0 && VideoWidth > 0)
             {
                 if (_subtitlesHeight > 0)
                 {
@@ -509,6 +640,8 @@ namespace Nikse.SubtitleEdit.Controls
                     VideoPlayerContainerResize(null, null);
                 }
                 _subtitleText = text;
+                _subtitleTextOriginal = originalText;
+                _translationPreviewActive = translationPreview;
                 RefreshMpv(mpv, subtitle, format);
                 if (TextBox.Text.Length > 0)
                 {
@@ -517,14 +650,14 @@ namespace Nikse.SubtitleEdit.Controls
             }
             else
             {
-                if (!string.IsNullOrEmpty(_mpvTextFileName) || _subtitlesHeight == 0)
+                if (!string.IsNullOrEmpty(_mpvTextFileName) || (_subtitlesHeight == 0 && !UseTopLevelTranslationOverlayMode()))
                 {
                     mpv?.RemoveSubtitle();
                     _subtitlesHeight = 57;
                     VideoPlayerContainerResize(null, null);
                     DeleteTempMpvFileName();
                 }
-                SubtitleText = text;
+                SetSubtitleTextBox(text, originalText, translationPreview);
             }
         }
 
@@ -746,11 +879,291 @@ namespace Nikse.SubtitleEdit.Controls
         public string SubtitleText
         {
             get => _subtitleText;
-            set
+            set => SetSubtitleTextBox(value, string.Empty, false);
+        }
+
+        private void SetSubtitleTextBox(string text, string originalText, bool translationPreview)
+        {
+            var wasUsingTopLevelOverlay = UseTopLevelTranslationOverlayMode();
+            var hadOriginalText = !string.IsNullOrEmpty(_subtitleTextOriginal);
+            _subtitleText = text;
+            _subtitleTextOriginal = originalText ?? string.Empty;
+            _translationPreviewActive = translationPreview;
+
+            if (UseTopLevelTranslationOverlayMode())
             {
-                _subtitleText = value;
-                SetRtbHtml.SetText(TextBox, value);
+                if (!wasUsingTopLevelOverlay)
+                {
+                    VideoPlayerContainerResize(null, null);
+                }
+
+                UpdateTranslationPreviewOverlay(text, _subtitleTextOriginal);
+                return;
             }
+
+            HideTranslationPreviewOverlay();
+            SetSubtitlePanelParent(!string.IsNullOrEmpty(_subtitleTextOriginal));
+            _panelSubtitle.Visible = true;
+            var suspendDrawing = Configuration.IsRunningOnWindows && TextBox.IsHandleCreated && TextBox.Visible;
+            if (suspendDrawing)
+            {
+                TextBox.BeginRichTextBoxUpdate();
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(_subtitleTextOriginal))
+                {
+                    TextBox.Dock = DockStyle.Fill;
+                    TextBox.ForeColor = Configuration.Settings.General.VideoPlayerPreviewTextColor;
+                    SetRtbHtml.SetText(TextBox, text);
+                }
+                else
+                {
+                    TextBox.Clear();
+                    TextBox.SelectionAlignment = HorizontalAlignment.Center;
+                    AppendPreviewText(text, false);
+                    TextBox.AppendText(Environment.NewLine);
+                    AppendPreviewText(_subtitleTextOriginal, true);
+                }
+
+                TextBox.SelectAll();
+                TextBox.SelectionAlignment = HorizontalAlignment.Center;
+                TextBox.DeselectAll();
+            }
+            finally
+            {
+                if (suspendDrawing)
+                {
+                    TextBox.EndRichTextBoxUpdate();
+                }
+            }
+
+            if (string.IsNullOrEmpty(_subtitleTextOriginal))
+            {
+                var defaultSubtitlesHeight = GetSubtitlesHeight();
+                if (_subtitlesHeight != defaultSubtitlesHeight || wasUsingTopLevelOverlay || hadOriginalText)
+                {
+                    _subtitlesHeight = defaultSubtitlesHeight;
+                    VideoPlayerContainerResize(null, null);
+                }
+            }
+            else
+            {
+                ResizeTranslationPreviewBox(text, _subtitleTextOriginal, wasUsingTopLevelOverlay || !hadOriginalText);
+            }
+        }
+
+        private void AppendPreviewText(string text, bool original)
+        {
+            var gs = Configuration.Settings.General;
+            var fontName = original ? gs.VideoPlayerPreviewOriginalFontName : gs.VideoPlayerPreviewTranslationFontName;
+            var fontSize = original ? gs.VideoPlayerPreviewOriginalFontSize : gs.VideoPlayerPreviewTranslationFontSize;
+            var bold = original ? gs.VideoPlayerPreviewOriginalFontBold : gs.VideoPlayerPreviewTranslationFontBold;
+            var color = original ? gs.VideoPlayerPreviewOriginalTextColor : gs.VideoPlayerPreviewTranslationTextColor;
+            if (string.IsNullOrWhiteSpace(fontName))
+            {
+                fontName = gs.VideoPlayerPreviewFontName;
+            }
+
+            if (fontSize <= 0)
+            {
+                fontSize = gs.VideoPlayerPreviewFontSize;
+            }
+
+            if (color.IsEmpty)
+            {
+                color = gs.VideoPlayerPreviewTextColor;
+            }
+
+            var fontStyle = bold ? FontStyle.Bold : FontStyle.Regular;
+
+            TextBox.SelectionFont = new Font(fontName, fontSize * FontSizeFactor, fontStyle);
+            TextBox.SelectionColor = color;
+            TextBox.AppendText(HtmlUtil.RemoveHtmlTags(text ?? string.Empty));
+        }
+
+        private void ResizeTranslationPreviewBox(string text, string originalText, bool layoutChanged)
+        {
+            var gs = Configuration.Settings.General;
+            var width = Math.Max(100, Width - 20);
+            var mainFontName = string.IsNullOrWhiteSpace(gs.VideoPlayerPreviewTranslationFontName) ? gs.VideoPlayerPreviewFontName : gs.VideoPlayerPreviewTranslationFontName;
+            var mainFontSize = gs.VideoPlayerPreviewTranslationFontSize <= 0 ? gs.VideoPlayerPreviewFontSize : gs.VideoPlayerPreviewTranslationFontSize;
+            using (var mainFont = new Font(mainFontName, mainFontSize * FontSizeFactor, gs.VideoPlayerPreviewTranslationFontBold ? FontStyle.Bold : FontStyle.Regular))
+            using (var originalFont = new Font(gs.VideoPlayerPreviewOriginalFontName, gs.VideoPlayerPreviewOriginalFontSize * FontSizeFactor, gs.VideoPlayerPreviewOriginalFontBold ? FontStyle.Bold : FontStyle.Regular))
+            {
+                var requiredHeight =
+                    MeasurePreviewTextHeight(text, mainFont, width) +
+                    MeasurePreviewTextHeight(originalText, originalFont, width) +
+                    8;
+                var maxHeight = Math.Max(GetSubtitlesHeight(), Height - ControlsHeight);
+                var newHeight = Math.Min(Math.Max(GetSubtitlesHeight(), requiredHeight), maxHeight);
+
+                if (_subtitlesHeight != newHeight || layoutChanged)
+                {
+                    _subtitlesHeight = newHeight;
+                    VideoPlayerContainerResize(null, null);
+                }
+            }
+        }
+
+        private void SetSubtitlePanelParent(bool useVideoOverlay)
+        {
+            if (useVideoOverlay)
+            {
+                if (_panelSubtitle.Parent != PanelPlayer)
+                {
+                    _panelSubtitle.Parent?.Controls.Remove(_panelSubtitle);
+                    PanelPlayer.Controls.Add(_panelSubtitle);
+                }
+
+                BringSubtitleOverlayToTop();
+                return;
+            }
+
+            if (_panelSubtitle.Parent != this)
+            {
+                _panelSubtitle.Parent?.Controls.Remove(_panelSubtitle);
+                Controls.Add(_panelSubtitle);
+                _panelControls?.BringToFront();
+            }
+        }
+
+        private bool UseTopLevelTranslationOverlay()
+        {
+            return UseTopLevelTranslationOverlayMode() &&
+                   (!string.IsNullOrWhiteSpace(_subtitleText) || !string.IsNullOrWhiteSpace(_subtitleTextOriginal));
+        }
+
+        private bool UseTopLevelTranslationOverlayMode()
+        {
+            return _translationPreviewActive && VideoPlayer?.PlayerName == "MPC-HC";
+        }
+
+        private void UpdateTranslationPreviewOverlay(string text, string originalText)
+        {
+            if (string.IsNullOrWhiteSpace(text) && string.IsNullOrWhiteSpace(originalText))
+            {
+                _translationPreviewOverlay?.SetText(string.Empty, string.Empty, FontSizeFactor);
+                return;
+            }
+
+            if (_translationPreviewOverlay == null || _translationPreviewOverlay.IsDisposed)
+            {
+                _translationPreviewOverlay = new TranslationPreviewOverlayForm();
+            }
+
+            var owner = FindForm();
+            SetTranslationPreviewOverlayOwner(owner);
+            if (owner?.Icon != null)
+            {
+                _translationPreviewOverlay.Icon = owner.Icon;
+            }
+
+            _translationPreviewOverlay.SetText(text, originalText, FontSizeFactor);
+            if (!_translationPreviewOverlay.Visible)
+            {
+                _translationPreviewOverlay.CreateControl();
+                UpdateTranslationPreviewOverlayBounds(true);
+                NativeMethods.ShowWindow(_translationPreviewOverlay.Handle, 4); // SW_SHOWNOACTIVATE
+            }
+
+            UpdateTranslationPreviewOverlayBounds();
+            NativeMethods.SetWindowPos(_translationPreviewOverlay.Handle, 0, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010); // HWND_TOP, NOSIZE, NOMOVE, NOACTIVATE
+        }
+
+        private void UpdateTranslationPreviewOverlayBounds(bool allowHidden = false)
+        {
+            if (_translationPreviewOverlay == null || _translationPreviewOverlay.IsDisposed || !_translationPreviewOverlay.Visible && !allowHidden)
+            {
+                return;
+            }
+
+            var location = PanelPlayer.PointToScreen(Point.Empty);
+            _translationPreviewOverlay.Bounds = new Rectangle(location, PanelPlayer.Size);
+        }
+
+        private void HideTranslationPreviewOverlay()
+        {
+            if (_translationPreviewOverlay != null && !_translationPreviewOverlay.IsDisposed)
+            {
+                _translationPreviewOverlay.SetText(string.Empty, string.Empty, FontSizeFactor);
+                _translationPreviewOverlay.Hide();
+            }
+        }
+
+        private void SetTranslationPreviewOverlayOwner(Form owner)
+        {
+            if (_translationPreviewOverlayOwner == owner)
+            {
+                return;
+            }
+
+            if (_translationPreviewOverlayOwner != null)
+            {
+                _translationPreviewOverlayOwner.LocationChanged -= TranslationPreviewOverlayOwnerChanged;
+                _translationPreviewOverlayOwner.SizeChanged -= TranslationPreviewOverlayOwnerChanged;
+                _translationPreviewOverlayOwner.VisibleChanged -= TranslationPreviewOverlayOwnerChanged;
+                _translationPreviewOverlayOwner.Activated -= TranslationPreviewOverlayOwnerActivated;
+                _translationPreviewOverlayOwner.Deactivate -= TranslationPreviewOverlayOwnerDeactivated;
+            }
+
+            _translationPreviewOverlayOwner = owner;
+            if (_translationPreviewOverlayOwner != null)
+            {
+                _translationPreviewOverlayOwner.LocationChanged += TranslationPreviewOverlayOwnerChanged;
+                _translationPreviewOverlayOwner.SizeChanged += TranslationPreviewOverlayOwnerChanged;
+                _translationPreviewOverlayOwner.VisibleChanged += TranslationPreviewOverlayOwnerChanged;
+                _translationPreviewOverlayOwner.Activated += TranslationPreviewOverlayOwnerActivated;
+                _translationPreviewOverlayOwner.Deactivate += TranslationPreviewOverlayOwnerDeactivated;
+            }
+        }
+
+        private void TranslationPreviewOverlayOwnerChanged(object sender, EventArgs e)
+        {
+            UpdateTranslationPreviewOverlayBounds();
+        }
+
+        private void TranslationPreviewOverlayOwnerActivated(object sender, EventArgs e)
+        {
+            if (UseTopLevelTranslationOverlay())
+            {
+                UpdateTranslationPreviewOverlay(_subtitleText, _subtitleTextOriginal);
+            }
+        }
+
+        private void TranslationPreviewOverlayOwnerDeactivated(object sender, EventArgs e)
+        {
+            HideTranslationPreviewOverlay();
+        }
+
+        private void BringSubtitleOverlayToTop()
+        {
+            _panelSubtitle.BringToFront();
+
+            if (_panelSubtitle.IsHandleCreated)
+            {
+                const int hwndTop = 0;
+                const int swpNoSize = 0x0001;
+                const int swpNoMove = 0x0002;
+                const int swpNoActivate = 0x0010;
+                NativeMethods.SetWindowPos(_panelSubtitle.Handle, hwndTop, 0, 0, 0, 0, swpNoSize | swpNoMove | swpNoActivate);
+            }
+        }
+
+        private static int MeasurePreviewTextHeight(string text, Font font, int width)
+        {
+            var cleanText = HtmlUtil.RemoveHtmlTags(text ?? string.Empty);
+            if (string.IsNullOrWhiteSpace(cleanText))
+            {
+                return font.Height;
+            }
+
+            return TextRenderer.MeasureText(
+                cleanText,
+                font,
+                new Size(width, int.MaxValue),
+                TextFormatFlags.WordBreak | TextFormatFlags.NoPadding).Height;
         }
 
         private void PanelPlayerMouseDown(object sender, MouseEventArgs e)
@@ -772,7 +1185,7 @@ namespace Nikse.SubtitleEdit.Controls
 
         private Control MakePlayerPanel()
         {
-            PanelPlayer = new DoubleBufferedPanel { BackColor = _backgroundColor, Left = 0, Top = 0 };
+            PanelPlayer = new DoubleBufferedPanel { BackColor = Color.Black, Left = 0, Top = 0 };
             return PanelPlayer;
         }
 
@@ -1198,12 +1611,36 @@ namespace Nikse.SubtitleEdit.Controls
             }
 
             ControlsHeight = _pictureBoxBackground.Height;
-            PanelPlayer.Height = Height - (ControlsHeight + _subtitlesHeight);
-            PanelPlayer.Width = Width;
+            var useTopLevelTranslationOverlay = UseTopLevelTranslationOverlayMode();
+            var subtitlesHeightForLayout = useTopLevelTranslationOverlay ? 0 : _subtitlesHeight;
+            PanelPlayer.Size = new Size(Width, Math.Max(0, Height - (ControlsHeight + subtitlesHeightForLayout)));
+            LogResizeState(_translationPreviewActive, useTopLevelTranslationOverlay, subtitlesHeightForLayout);
             _videoPlayer?.Resize(PanelPlayer.Width, PanelPlayer.Height);
 
-            _panelSubtitle.Top = Height - (ControlsHeight + _subtitlesHeight);
-            _panelSubtitle.Width = Width;
+            if (useTopLevelTranslationOverlay)
+            {
+                _panelSubtitle.Visible = false;
+                UpdateTranslationPreviewOverlayBounds();
+            }
+            else
+            {
+                HideTranslationPreviewOverlay();
+                var showInlineTranslation = !string.IsNullOrEmpty(_subtitleTextOriginal);
+                SetSubtitlePanelParent(showInlineTranslation);
+                _panelSubtitle.Visible = true;
+                _panelSubtitle.Left = 0;
+                _panelSubtitle.Top = showInlineTranslation
+                    ? Math.Max(0, PanelPlayer.Height - _subtitlesHeight)
+                    : Height - (ControlsHeight + _subtitlesHeight);
+                _panelSubtitle.Width = showInlineTranslation ? PanelPlayer.Width : Width;
+            }
+
+            _panelSubtitle.Height = _subtitlesHeight + 1;
+            if (_panelSubtitle.Visible)
+            {
+                BringSubtitleOverlayToTop();
+            }
+            _panelControls.BringToFront();
 
             _panelControls.Top = Height - ControlsHeight + 2;
             _panelControls.Width = Width;
@@ -1217,6 +1654,32 @@ namespace Nikse.SubtitleEdit.Controls
 
             _labelVideoPlayerName.Left = Width - _labelVideoPlayerName.Width - 3;
             DeleteTempMpvFileName();
+        }
+
+        private void LogResizeState(bool isTranslationPreview, bool useTopLevelTranslationOverlay, int subtitlesHeightForLayout)
+        {
+            if (_lastLoggedContainerSize == Size && _lastLoggedPanelPlayerSize == PanelPlayer.Size)
+            {
+                return;
+            }
+
+            _lastLoggedContainerSize = Size;
+            _lastLoggedPanelPlayerSize = PanelPlayer.Size;
+
+            try
+            {
+                var fileName = Path.Combine(Configuration.DataDirectory, "video_resize_log.txt");
+                File.AppendAllText(fileName,
+                    $"{DateTime.Now:O} VideoPlayerContainerResize " +
+                    $"container={Width}x{Height}, panel={PanelPlayer.Width}x{PanelPlayer.Height}, " +
+                    $"controlsHeight={ControlsHeight}, subtitlesHeight={_subtitlesHeight}, layoutSubtitleHeight={subtitlesHeightForLayout}, " +
+                    $"translation={isTranslationPreview}, topOverlay={useTopLevelTranslationOverlay}, panelDock={PanelPlayer.Dock}, " +
+                    $"panelVisible={PanelPlayer.Visible}, subtitlePanelVisible={_panelSubtitle.Visible}{Environment.NewLine}");
+            }
+            catch
+            {
+                // Diagnostic logging must never affect playback.
+            }
         }
 
         private void ResizeTimeCode()
@@ -2195,6 +2658,13 @@ namespace Nikse.SubtitleEdit.Controls
         protected override void Dispose(bool disposing)
         {
             DeleteTempMpvFileName();
+            if (disposing && _translationPreviewOverlay != null)
+            {
+                SetTranslationPreviewOverlayOwner(null);
+                _translationPreviewOverlay.Dispose();
+                _translationPreviewOverlay = null;
+            }
+
             base.Dispose(disposing);
             _retryCount = 3;
         }
@@ -2203,6 +2673,7 @@ namespace Nikse.SubtitleEdit.Controls
         {
             Pause();
             SubtitleText = string.Empty;
+            HideTranslationPreviewOverlay();
             Chapters = Array.Empty<MatroskaChapter>();
             MpvPreviewStyleHeader = null;
             var temp = VideoPlayer;

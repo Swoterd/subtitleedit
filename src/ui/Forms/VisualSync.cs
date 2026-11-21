@@ -568,7 +568,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("VisualSync.ButtonOpenMovie") == DialogResult.OK)
             {
                 AudioTrackNumber = -1;
                 openFileDialog1.InitialDirectory = Path.GetDirectoryName(openFileDialog1.FileName);

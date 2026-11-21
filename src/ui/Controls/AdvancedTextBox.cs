@@ -257,20 +257,32 @@ namespace Nikse.SubtitleEdit.Controls
 
         private void DoFormattingActionOnRtb(Action formattingAction)
         {
-            this.BeginRichTextBoxUpdate();
-            var start = SelectionStart;
-            var length = SelectionLength;
-            formattingAction();
-            SelectionStart = start;
-            if (SelectionStart < start)
+            var suspendDrawing = Configuration.IsRunningOnWindows && IsHandleCreated && Visible;
+            if (suspendDrawing)
             {
-                SelectionStart = start + 1;
+                this.BeginRichTextBoxUpdate();
             }
 
-            SelectionLength = length;
+            try
+            {
+                var start = SelectionStart;
+                var length = SelectionLength;
+                formattingAction();
+                SelectionStart = start;
+                if (SelectionStart < start)
+                {
+                    SelectionStart = start + 1;
+                }
 
-
-            this.EndRichTextBoxUpdate();
+                SelectionLength = length;
+            }
+            finally
+            {
+                if (suspendDrawing)
+                {
+                    this.EndRichTextBoxUpdate();
+                }
+            }
         }
 
         private void SetTextPosInRtbIfCentered()

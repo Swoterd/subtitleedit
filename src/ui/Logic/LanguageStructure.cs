@@ -2610,6 +2610,7 @@
             public string CheckForUpdates { get; set; }
             public string AutoSave { get; set; }
             public string AllowEditOfOriginalSubtitle { get; set; }
+            public string AlignOriginalSubtitleTimingOnOpen { get; set; }
             public string PromptDeleteLines { get; set; }
             public string TimeCodeMode { get; set; }
             public string TimeCodeModeHHMMSSMS { get; set; }
@@ -2644,11 +2645,14 @@
             public string WaveformShowWpm { get; set; }
             public string ReverseMouseWheelScrollDirection { get; set; }
             public string WaveformAllowOverlap { get; set; }
+            public string WaveformAutoLinkAdjacentBoundaries { get; set; }
+            public string WaveformAutoLinkAdjacentBoundariesThreshold { get; set; }
             public string WaveformSetVideoPosMoveStartEnd { get; set; }
             public string WaveformFocusMouseEnter { get; set; }
             public string WaveformListViewFocusMouseEnter { get; set; }
             public string WaveformSingleClickSelect { get; set; }
             public string WaveformSnapToShotChanges { get; set; }
+            public string SpectrogramAegisubMode { get; set; }
             public string WaveformEditShotChangesProfile { get; set; }
             public string WaveformAutoGen { get; set; }
             public string WaveformBorderHitMs1 { get; set; }
@@ -3678,6 +3682,8 @@
             public string SplitAtCursor { get; set; }
             public string MergeWithPrevious { get; set; }
             public string MergeWithNext { get; set; }
+            public string MergeWithPreviousAsDialog { get; set; }
+            public string MergeWithNextAsDialog { get; set; }
             public string RunWhisperSelectedParagraph { get; set; }
             public string ExtendToPrevious { get; set; }
             public string ExtendToNext { get; set; }

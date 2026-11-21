@@ -23,7 +23,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.Filter = "Csv files|*.csv";
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("NuendoProperties.ButtonChooseCharacter", this) == DialogResult.OK)
             {
                 textBoxCharacterFile.Text = openFileDialog1.FileName;
 

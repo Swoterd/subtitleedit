@@ -2421,6 +2421,7 @@ Command line: {1} {2}
     <CheckForUpdates>检查更新</CheckForUpdates>
     <AutoSave>自动保存</AutoSave>
     <AllowEditOfOriginalSubtitle>允许编辑原始字幕</AllowEditOfOriginalSubtitle>
+    <AlignOriginalSubtitleTimingOnOpen>打开原始字幕后按主字幕对齐字幕轴</AlignOriginalSubtitleTimingOnOpen>
     <PromptDeleteLines>删除行时提示</PromptDeleteLines>
     <TimeCodeMode>时间码模式</TimeCodeMode>
     <TimeCodeModeHHMMSSMS>HH:MM:SS.MS (00:00:01.500)</TimeCodeModeHHMMSSMS>
@@ -2455,11 +2456,14 @@ Command line: {1} {2}
     <WaveformShowWpm>显示每分词频（WPM）</WaveformShowWpm>
     <ReverseMouseWheelScrollDirection>反转鼠标滚动方向</ReverseMouseWheelScrollDirection>
     <WaveformAllowOverlap>允许重叠 (当移动/调整时长时)</WaveformAllowOverlap>
+    <WaveformAutoLinkAdjacentBoundaries>自动吸附相邻字幕边界</WaveformAutoLinkAdjacentBoundaries>
+    <WaveformAutoLinkAdjacentBoundariesThreshold>吸附阈值</WaveformAutoLinkAdjacentBoundariesThreshold>
     <WaveformSetVideoPosMoveStartEnd>移动开始/结束时间时设置视频位置</WaveformSetVideoPosMoveStartEnd>
     <WaveformFocusMouseEnter>鼠标滑过后设置焦点</WaveformFocusMouseEnter>
     <WaveformListViewFocusMouseEnter>允许当鼠标经过时将焦点设置到列表视图</WaveformListViewFocusMouseEnter>
     <WaveformSingleClickSelect>单击以选中字幕</WaveformSingleClickSelect>
     <WaveformSnapToShotChanges>吸附到场景切换点 (按住Shift键可临时禁用)</WaveformSnapToShotChanges>
+    <SpectrogramAegisubMode>Aegisub模式：在频谱图显示视频关键帧/I帧</SpectrogramAegisubMode>
     <WaveformEditShotChangesProfile>编辑配置...</WaveformEditShotChangesProfile>
     <WaveformAutoGen>打开视频时自动生成波形</WaveformAutoGen>
     <WaveformBorderHitMs1>边界标记线的最短相接间隔需为</WaveformBorderHitMs1>
@@ -2665,7 +2669,7 @@ Command line: {1} {2}
     <ToggleQuotes>切换引号</ToggleQuotes>
     <ToggleHiTags>切换HI标签</ToggleHiTags>
     <ToggleCustomTags>切换自定义标签（环绕）</ToggleCustomTags>
-    <ToggleMusicSymbols>使用音乐符号</ToggleMusicSymbols>
+    <ToggleMusicSymbols>歌词</ToggleMusicSymbols>
     <Alignment>对齐 (所选行)</Alignment>
     <AlignmentN1>左下对齐 - {\an1}</AlignmentN1>
     <AlignmentN2>中下对齐 - {\an2}</AlignmentN2>
@@ -3427,6 +3431,8 @@ Command line: {1} {2}
     <SplitAtCursor>在光标处分割</SplitAtCursor>
     <MergeWithPrevious>与上一行合并</MergeWithPrevious>
     <MergeWithNext>与下一行合并</MergeWithNext>
+    <MergeWithPreviousAsDialog>与上一行合并为对话</MergeWithPreviousAsDialog>
+    <MergeWithNextAsDialog>与下一行合并为对话</MergeWithNextAsDialog>
     <RunWhisperSelectedParagraph>在选定的段落上运行 Whisper...</RunWhisperSelectedParagraph>
     <ExtendToPrevious>延伸至上一行</ExtendToPrevious>
     <ExtendToNext>延伸至下一行</ExtendToNext>

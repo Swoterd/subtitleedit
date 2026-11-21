@@ -747,7 +747,7 @@ namespace Nikse.SubtitleEdit.Forms.VTT
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = "WebVTT files|*.webvtt;*.vtt";
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("WebVttStyleManager.buttonImport") != DialogResult.OK)
                 {
                     return;
                 }

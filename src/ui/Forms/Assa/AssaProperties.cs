@@ -278,7 +278,7 @@ namespace Nikse.SubtitleEdit.Forms.Assa
                 openFileDialog1.FileName = Path.GetFileName(_videoFileName);
             }
 
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("AssaProperties.buttonGetResolutionFromVideo") == DialogResult.OK)
             {
                 var info = UiUtil.GetVideoInfo(openFileDialog1.FileName);
                 if (info != null && info.Success)

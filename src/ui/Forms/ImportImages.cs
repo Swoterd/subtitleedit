@@ -45,7 +45,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = LanguageSettings.Current.ImportImages.ImageFiles + "|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff";
             openFileDialog1.Multiselect = true;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ImportImages.buttonInputBrowse", this) == DialogResult.OK)
             {
                 foreach (string fileName in openFileDialog1.FileNames)
                 {

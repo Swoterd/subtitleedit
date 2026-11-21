@@ -127,7 +127,7 @@ namespace Nikse.SubtitleEdit.Forms
                 }
             }
 
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("SetSyncPoint.buttonOpenMovie") == DialogResult.OK)
             {
                 _audioTrackNumber = -1;
                 openFileDialog1.InitialDirectory = Path.GetDirectoryName(openFileDialog1.FileName);

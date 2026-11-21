@@ -595,13 +595,13 @@ namespace Nikse.SubtitleEdit.Logic
             var trackBar = GetAll(groupBoxWaveform, typeof(TrackBar)).First();
             trackBar.Hide();
 
-            var audioVisualizer = GetAll(groupBoxWaveform, typeof(AudioVisualizer)).First();
-            audioVisualizer.Hide();
+            var waveformPanel = GetAll(groupBoxWaveform, typeof(AudioVisualizer)).First().Parent;
+            waveformPanel.Hide();
 
-            videoPlayerContainer.Left = audioVisualizer.Left;
-            videoPlayerContainer.Top = audioVisualizer.Top;
+            videoPlayerContainer.Left = waveformPanel.Left;
+            videoPlayerContainer.Top = waveformPanel.Top;
             videoPlayerContainer.Width = groupBoxWaveform.Width - videoPlayerContainer.Left - 10;
-            videoPlayerContainer.Height = audioVisualizer.Height;
+            videoPlayerContainer.Height = waveformPanel.Height;
             videoPlayerContainer.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right;
         }
 
@@ -792,11 +792,11 @@ namespace Nikse.SubtitleEdit.Logic
             var trackBar = GetAll(groupBoxWaveform, typeof(TrackBar)).First();
             trackBar.Show();
 
-            var audioVisualizer = GetAll(groupBoxWaveform, typeof(AudioVisualizer)).First();
-            audioVisualizer.Show();
+            var waveformPanel = GetAll(groupBoxWaveform, typeof(AudioVisualizer)).First().Parent;
+            waveformPanel.Show();
 
-            audioVisualizer.Height = panel.Top - audioVisualizer.Top - 2;
-            audioVisualizer.Width = groupBoxWaveform.Width - audioVisualizer.Left - 5;
+            waveformPanel.Height = panel.Top - waveformPanel.Top - 2;
+            waveformPanel.Width = groupBoxWaveform.Width - waveformPanel.Left - 5;
         }
 
         public static string SaveLayout()

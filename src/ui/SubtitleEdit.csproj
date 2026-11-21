@@ -11,6 +11,7 @@
     <RootNamespace>Nikse.SubtitleEdit</RootNamespace>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">.\</SolutionDir>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -298,6 +299,7 @@
     <PackageReference Include="ncalc" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="NHunspell" />
+    <PackageReference Include="System.Resources.Extensions" />
     <PackageReference Include="System.Security.AccessControl" />
     <PackageReference Include="System.Security.Principal.Windows" />
     <PackageReference Include="Vosk" />

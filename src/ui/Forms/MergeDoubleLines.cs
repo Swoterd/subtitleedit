@@ -152,7 +152,7 @@ namespace Nikse.SubtitleEdit.Forms
                     continue;
                 }
 
-                p = new Paragraph(subtitle.GetParagraphOrDefault(i - 1));
+                p = new Paragraph(subtitle.GetParagraphOrDefault(i - 1), false);
                 mergedSubtitle.Paragraphs.Add(p);
 
                 for (var j = i; j < subtitle.Paragraphs.Count; j++)
@@ -213,7 +213,7 @@ namespace Nikse.SubtitleEdit.Forms
 
             if (!mergedIndexes.Contains(subtitle.Paragraphs.Count - 1))
             {
-                mergedSubtitle.Paragraphs.Add(new Paragraph(subtitle.GetParagraphOrDefault(subtitle.Paragraphs.Count - 1)));
+                mergedSubtitle.Paragraphs.Add(new Paragraph(subtitle.GetParagraphOrDefault(subtitle.Paragraphs.Count - 1), false));
             }
 
             if (!_loading)

@@ -197,7 +197,7 @@ namespace Nikse.SubtitleEdit.Forms.DCinema
         {
             using (var openDialog = new OpenFileDialog { FileName = string.Empty, Filter = "Export profile|*" + ProfileExtension })
             {
-                if (openDialog.ShowDialog(this) != DialogResult.OK)
+                if (openDialog.ShowDialogWithLastFolder("DCinemaPropertiesInterop.importToolStripMenuItem", this) != DialogResult.OK)
                 {
                     return;
                 }

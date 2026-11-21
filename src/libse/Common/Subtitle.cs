@@ -383,13 +383,13 @@ namespace Nikse.SubtitleEdit.Core.Common
             Paragraphs.Clear();
             foreach (var p in HistoryItems[index].Subtitle.Paragraphs)
             {
-                Paragraphs.Add(new Paragraph(p));
+                Paragraphs.Add(new Paragraph(p, false));
             }
 
             subtitleFormatFriendlyName = HistoryItems[index].SubtitleFormatFriendlyName;
             FileName = HistoryItems[index].FileName;
             fileModified = HistoryItems[index].FileModified;
-            originalSubtitle = new Subtitle(HistoryItems[index].OriginalSubtitle);
+            originalSubtitle = new Subtitle(HistoryItems[index].OriginalSubtitle, false);
             originalSubtitleFileName = HistoryItems[index].OriginalSubtitleFileName;
             Header = HistoryItems[index].Subtitle.Header;
 

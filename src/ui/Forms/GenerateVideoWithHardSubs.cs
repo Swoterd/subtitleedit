@@ -2235,7 +2235,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
                 openFileDialog1.Multiselect = true;
-                if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateVideoWithHardSubs.addFilesToolStripMenuItem", this) != DialogResult.OK)
                 {
                     return;
                 }
@@ -2478,7 +2478,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
                 openFileDialog1.Multiselect = false;
-                if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateVideoWithHardSubs.pickSubtitleFileToolStripMenuItem", this) != DialogResult.OK)
                 {
                     return;
                 }

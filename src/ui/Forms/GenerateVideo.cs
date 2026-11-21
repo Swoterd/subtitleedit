@@ -343,7 +343,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.Title = "Open...";
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = "Images|*.png;*.jpg;*.jpeg;*.gif;*.tiff;*.bmp";
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateVideo.buttonChooseImageFile") == DialogResult.OK)
                 {
                     _backgroundImage?.Dispose();
                     _backgroundImage = (Bitmap)Bitmap.FromFile(openFileDialog1.FileName);
@@ -371,7 +371,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateVideo.buttonChooseDuration") == DialogResult.OK)
                 {
                     var info = UiUtil.GetVideoInfo(openFileDialog1.FileName);
                     if (info != null && info.Success && info.TotalSeconds > 0)
@@ -390,7 +390,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateVideo.toolStripMenuItemResBrowse") == DialogResult.OK)
                 {
                     var info = UiUtil.GetVideoInfo(openFileDialog1.FileName);
                     if (info != null && info.Success && info.Width > 0 && info.Height > 0)

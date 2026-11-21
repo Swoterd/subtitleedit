@@ -564,7 +564,7 @@ namespace Nikse.SubtitleEdit.Forms.Ocr
             openFileDialog1.InitialDirectory = Configuration.DataDirectory;
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Title = "Import existing nOCR database into current";
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("VobSubNOcrEdit.buttonImport", this) == DialogResult.OK)
             {
                 var newDb = new NOcrDb(openFileDialog1.FileName);
                 importedCount = ImportCharacters(importedCount, ref notImportedCount, newDb.OcrCharacters);

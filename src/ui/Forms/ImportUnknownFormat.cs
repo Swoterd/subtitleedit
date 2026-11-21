@@ -93,7 +93,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.Title = buttonOpenText.Text;
             openFileDialog1.Filter = LanguageSettings.Current.ImportText.TextFiles + "|*.txt|" + LanguageSettings.Current.General.AllFiles + "|*.*";
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ImportUnknownFormat.buttonOpenText") == DialogResult.OK)
             {
                 LoadTextFile(openFileDialog1.FileName);
             }

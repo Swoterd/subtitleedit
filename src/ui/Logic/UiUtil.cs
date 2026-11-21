@@ -88,11 +88,7 @@ namespace Nikse.SubtitleEdit.Logic
                     bool isInfo = p == subtitle.Paragraphs[0] && (Math.Abs(p.StartTime.TotalMilliseconds) < 0.01 && Math.Abs(p.DurationTotalMilliseconds) < 0.01 || Math.Abs(p.StartTime.TotalMilliseconds - Pac.PacNullTime.TotalMilliseconds) < 0.01);
                     if (!isInfo)
                     {
-                        if (videoPlayerContainer.LastParagraph != p)
-                        {
-                            videoPlayerContainer.SetSubtitleText(text, p, subtitle, format);
-                        }
-                        else if (videoPlayerContainer.SubtitleText != text)
+                        if (!videoPlayerContainer.IsSubtitlePreviewCurrent(p, text, string.Empty, false))
                         {
                             videoPlayerContainer.SetSubtitleText(text, p, subtitle, format);
                         }
@@ -102,7 +98,7 @@ namespace Nikse.SubtitleEdit.Logic
                 }
             }
 
-            if (!string.IsNullOrEmpty(videoPlayerContainer.SubtitleText))
+            if (!videoPlayerContainer.IsSubtitlePreviewCurrent(null, string.Empty, string.Empty, false))
             {
                 videoPlayerContainer.SetSubtitleText(string.Empty, null, subtitle, format);
             }
@@ -142,27 +138,28 @@ namespace Nikse.SubtitleEdit.Logic
                 var p = subtitle.Paragraphs[i];
                 if (p.StartTime.TotalMilliseconds <= positionInMilliseconds && p.EndTime.TotalMilliseconds > positionInMilliseconds)
                 {
-                    var op = Utilities.GetOriginalParagraph(0, p, original.Paragraphs);
+                    var op = Utilities.GetOriginalParagraph(i, p, original.Paragraphs);
                     string text = p.Text.Replace("|", Environment.NewLine);
+                    string originalText = string.Empty;
                     if (op != null)
                     {
-                        text = text + Environment.NewLine + Environment.NewLine + op.Text.Replace("|", Environment.NewLine);
+                        originalText = op.Text.Replace("|", Environment.NewLine);
                     }
 
                     bool isInfo = p == subtitle.Paragraphs[0] && Math.Abs(p.StartTime.TotalMilliseconds) < 0.01 && positionInMilliseconds > 3000;
                     if (!isInfo)
                     {
-                        if (videoPlayerContainer.LastParagraph != p || videoPlayerContainer.SubtitleText != text)
+                        if (!videoPlayerContainer.IsSubtitlePreviewCurrent(p, text, originalText, true))
                         {
-                            videoPlayerContainer.SetSubtitleText(text, p, subtitle, format);
+                            videoPlayerContainer.SetSubtitleText(text, originalText, p, subtitle, format);
                         }
                         return i;
                     }
                 }
             }
-            if (!string.IsNullOrEmpty(videoPlayerContainer.SubtitleText))
+            if (!videoPlayerContainer.IsSubtitlePreviewCurrent(null, string.Empty, string.Empty, true))
             {
-                videoPlayerContainer.SetSubtitleText(string.Empty, null, subtitle, format);
+                videoPlayerContainer.SetSubtitleText(string.Empty, string.Empty, null, subtitle, format);
             }
             return -1;
         }

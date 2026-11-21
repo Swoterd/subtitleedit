@@ -6367,7 +6367,7 @@ $DROP=[DROPVALUE]" + Environment.NewLine + Environment.NewLine +
         {
             using (var openDialog = new OpenFileDialog { FileName = string.Empty, Filter = "Export profile|*" + ProfileExtension })
             {
-                if (openDialog.ShowDialog(this) != DialogResult.OK)
+                if (openDialog.ShowDialogWithLastFolder("ExportPngXml.importToolStripMenuItem", this) != DialogResult.OK)
                 {
                     return;
                 }

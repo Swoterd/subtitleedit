@@ -1147,7 +1147,7 @@ namespace Nikse.SubtitleEdit.Forms
 
             openFileDialog1.Title = LanguageSettings.Current.MultipleReplace.ImportRulesTitle;
             openFileDialog1.Filter = LanguageSettings.Current.MultipleReplace.Rules + TemplateFilterExtension;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("MultipleReplace.toolStripMenuItem3", this) == DialogResult.OK)
             {
                 try
                 {
@@ -1348,7 +1348,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.Title = LanguageSettings.Current.MultipleReplace.ImportRulesTitle;
             openFileDialog1.Filter = LanguageSettings.Current.MultipleReplace.Rules + TemplateFilterExtension;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("MultipleReplace.importToolStripMenuItem", this) == DialogResult.OK)
             {
                 try
                 {

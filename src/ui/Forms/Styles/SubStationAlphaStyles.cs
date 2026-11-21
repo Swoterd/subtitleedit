@@ -1616,7 +1616,7 @@ namespace Nikse.SubtitleEdit.Forms.Styles
                 saveFileDialogStyle.FileName = "my_styles.ass";
             }
 
-            if (openFileDialogImport.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialogImport.ShowDialogWithLastFolder("SubStationAlphaStyles.buttonImport", this) == DialogResult.OK)
             {
                 var s = new Subtitle();
                 var format = s.LoadSubtitle(openFileDialogImport.FileName, out _, null);

@@ -40,7 +40,7 @@ namespace Nikse.SubtitleEdit.Forms
 
         private void HardSubExtract_Shown(object sender, EventArgs e)
         {
-            if (openFileDialogVideo.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialogVideo.ShowDialogWithLastFolder("HardSubExtract.HardSubExtract", this) == DialogResult.OK)
             {
                 _videoFileName = openFileDialogVideo.FileName;
                 tbFileName.Text = openFileDialogVideo.FileName;

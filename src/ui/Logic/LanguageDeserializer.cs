@@ -6586,6 +6586,9 @@ namespace Nikse.SubtitleEdit.Logic
                 case "Settings/AllowEditOfOriginalSubtitle":
                     language.Settings.AllowEditOfOriginalSubtitle = reader.Value;
                     break;
+                case "Settings/AlignOriginalSubtitleTimingOnOpen":
+                    language.Settings.AlignOriginalSubtitleTimingOnOpen = reader.Value;
+                    break;
                 case "Settings/PromptDeleteLines":
                     language.Settings.PromptDeleteLines = reader.Value;
                     break;
@@ -6688,6 +6691,12 @@ namespace Nikse.SubtitleEdit.Logic
                 case "Settings/WaveformAllowOverlap":
                     language.Settings.WaveformAllowOverlap = reader.Value;
                     break;
+                case "Settings/WaveformAutoLinkAdjacentBoundaries":
+                    language.Settings.WaveformAutoLinkAdjacentBoundaries = reader.Value;
+                    break;
+                case "Settings/WaveformAutoLinkAdjacentBoundariesThreshold":
+                    language.Settings.WaveformAutoLinkAdjacentBoundariesThreshold = reader.Value;
+                    break;
                 case "Settings/WaveformSetVideoPosMoveStartEnd":
                     language.Settings.WaveformSetVideoPosMoveStartEnd = reader.Value;
                     break;
@@ -6702,6 +6711,9 @@ namespace Nikse.SubtitleEdit.Logic
                     break;
                 case "Settings/WaveformSnapToShotChanges":
                     language.Settings.WaveformSnapToShotChanges = reader.Value;
+                    break;
+                case "Settings/SpectrogramAegisubMode":
+                    language.Settings.SpectrogramAegisubMode = reader.Value;
                     break;
                 case "Settings/WaveformEditShotChangesProfile":
                     language.Settings.WaveformEditShotChangesProfile = reader.Value;
@@ -9408,6 +9420,12 @@ namespace Nikse.SubtitleEdit.Logic
                     break;
                 case "Waveform/MergeWithNext":
                     language.Waveform.MergeWithNext = reader.Value;
+                    break;
+                case "Waveform/MergeWithPreviousAsDialog":
+                    language.Waveform.MergeWithPreviousAsDialog = reader.Value;
+                    break;
+                case "Waveform/MergeWithNextAsDialog":
+                    language.Waveform.MergeWithNextAsDialog = reader.Value;
                     break;
                 case "Waveform/RunWhisperSelectedParagraph":
                     language.Waveform.RunWhisperSelectedParagraph = reader.Value;

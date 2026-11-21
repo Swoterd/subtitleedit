@@ -8513,7 +8513,7 @@ namespace Nikse.SubtitleEdit.Forms.Ocr
             openFileDialog1.Title = LanguageSettings.Current.General.OpenSubtitle;
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("VobSubOcr.importTextWithMatchingTimeCodesToolStripMenuItem", this) == DialogResult.OK)
             {
                 string fileName = openFileDialog1.FileName;
                 if (!File.Exists(fileName))
@@ -9913,7 +9913,7 @@ namespace Nikse.SubtitleEdit.Forms.Ocr
             openFileDialog1.Title = LanguageSettings.Current.General.OpenSubtitle;
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("VobSubOcr.importNewTimeCodesToolStripMenuItem", this) == DialogResult.OK)
             {
                 string fileName = openFileDialog1.FileName;
                 if (!File.Exists(fileName))

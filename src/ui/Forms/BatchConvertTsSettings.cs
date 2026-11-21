@@ -130,7 +130,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.GetVideoFileFilter(false);
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("BatchConvertTsSettings.ButtonChooseResolution") == DialogResult.OK)
             {
                 var info = UiUtil.GetVideoInfo(openFileDialog1.FileName);
                 if (info != null && info.Success)

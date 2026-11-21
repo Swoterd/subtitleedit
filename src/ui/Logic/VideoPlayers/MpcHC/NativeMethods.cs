@@ -18,6 +18,17 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             public IntPtr lpData;
         }
 
+        public struct Rect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+
+            public int Width => Right - Left;
+            public int Height => Bottom - Top;
+        }
+
         public enum SpecialWindowHandles
         {
             HWND_TOP = 0,
@@ -119,6 +130,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
         }
 
         public const Int32 WindowsMessageCopyData = 0x4A;
+        public const int WindowsMessageSize = 0x0005;
 
         #endregion structs, constants and enums
 
@@ -131,6 +143,18 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, SetWindowPosFlags uFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool MoveWindow(IntPtr hWnd, int x, int y, int width, int height, bool repaint);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool InvalidateRect(IntPtr hWnd, IntPtr lpRect, bool erase);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetWindowRect(IntPtr hWnd, out Rect lpRect);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -145,6 +169,9 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
 
         [DllImport("User32.dll", EntryPoint = "SendMessage")]
         internal static extern int SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, ref CopyDataStruct lParam);
+
+        [DllImport("User32.dll", EntryPoint = "SendMessage")]
+        internal static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll")]
         internal static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);

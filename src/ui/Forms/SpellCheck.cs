@@ -586,7 +586,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = LanguageSettings.Current.Main.BluRaySupFiles + "|*.sup|BDN xml/png|*.xml|VobSub|*.sub";
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("SpellCheck.OpenImageBasedSourceFile") != DialogResult.OK)
                 {
                     return;
                 }

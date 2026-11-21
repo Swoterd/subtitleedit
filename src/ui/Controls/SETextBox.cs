@@ -15,6 +15,7 @@ namespace Nikse.SubtitleEdit.Controls
     {
         private AdvancedTextBox _uiTextBox;
         private SimpleTextBox _simpleTextBox;
+        private TextBoxBase _activeTextBox;
 
         public SETextBox()
         {
@@ -33,39 +34,85 @@ namespace Nikse.SubtitleEdit.Controls
 
         public void Initialize(bool useSyntaxColoring, bool justTextBox)
         {
-            if (useSyntaxColoring && !justTextBox)
+            SuspendLayout();
+            try
             {
-                if (_uiTextBox is null)
+                if (useSyntaxColoring && !justTextBox)
                 {
-                    _uiTextBox = new AdvancedTextBox();
-                    ConfigureTextBoxEvents(_uiTextBox);
-                }
+                    if (_uiTextBox == null)
+                    {
+                        _uiTextBox = new AdvancedTextBox { BorderStyle = BorderStyle.None, Multiline = true, Visible = false };
+                        ConfigureTextBoxEvents(_uiTextBox);
+                    }
 
-                _uiTextBox.BorderStyle = BorderStyle.None;
-                _uiTextBox.Multiline = true;
-                ConfigureTextBoxAppearance(_uiTextBox);
-            }
-            else
-            {
-                if (_simpleTextBox is null)
-                {
-                    _simpleTextBox = new SimpleTextBox();
-                    _simpleTextBox.BorderStyle = BorderStyle.None;
-                    _simpleTextBox.Multiline = true;
-                    ConfigureTextBoxEvents(_simpleTextBox);
-                    _simpleTextBox.VisibleChanged += SimpleTextBox_VisibleChanged;
-                }
-
-                if (justTextBox)
-                {
-                    _simpleTextBox.ForeColor = UiUtil.ForeColor;
-                    _simpleTextBox.BackColor = UiUtil.BackColor;
-                    BackColor = Color.DarkGray;
+                    ShowEditor(_uiTextBox);
+                    ConfigureTextBoxAppearance(_uiTextBox);
                 }
                 else
                 {
-                    ConfigureTextBoxAppearance(_simpleTextBox);
+                    if (_simpleTextBox == null)
+                    {
+                        _simpleTextBox = new SimpleTextBox { BorderStyle = BorderStyle.None, Multiline = true, Visible = false };
+                        ConfigureTextBoxEvents(_simpleTextBox);
+                        _simpleTextBox.VisibleChanged += SimpleTextBox_VisibleChanged;
+                    }
+
+                    ShowEditor(_simpleTextBox);
+                    if (justTextBox)
+                    {
+                        _simpleTextBox.ForeColor = UiUtil.ForeColor;
+                        _simpleTextBox.BackColor = UiUtil.BackColor;
+                        BackColor = Color.DarkGray;
+                    }
+                    else
+                    {
+                        ConfigureTextBoxAppearance(_simpleTextBox);
+                    }
                 }
+            }
+            finally
+            {
+                ResumeLayout();
+            }
+        }
+
+        private void ShowEditor(TextBoxBase editor)
+        {
+            var previous = _activeTextBox;
+            if (ReferenceEquals(previous, editor))
+            {
+                return;
+            }
+
+            var hadFocus = previous?.Focused == true;
+            if (previous != null)
+            {
+                var selectionStart = previous is AdvancedTextBox richTextBox ? richTextBox.SelectionStart : previous.SelectionStart;
+                var selectionLength = previous is AdvancedTextBox rich ? rich.SelectionLength : previous.SelectionLength;
+                editor.Text = previous.Text;
+                if (editor is AdvancedTextBox nextRichTextBox)
+                {
+                    nextRichTextBox.SelectionStart = selectionStart;
+                    nextRichTextBox.SelectionLength = selectionLength;
+                }
+                else
+                {
+                    editor.Select(selectionStart, selectionLength);
+                }
+
+                editor.Enabled = previous.Enabled;
+                editor.ReadOnly = previous.ReadOnly;
+                editor.MaxLength = previous.MaxLength;
+                editor.ContextMenuStrip = previous.ContextMenuStrip;
+                editor.RightToLeft = previous.RightToLeft;
+                previous.Hide();
+            }
+
+            _activeTextBox = editor;
+            editor.Show();
+            if (hadFocus)
+            {
+                editor.Focus();
             }
         }
 
@@ -82,7 +129,13 @@ namespace Nikse.SubtitleEdit.Controls
             textBox.Dock = DockStyle.Fill;
             textBox.Enter += (sender, args) => BackColor = SystemColors.Highlight;
             textBox.Leave += (sender, args) => BackColor = SystemColors.WindowFrame;
-            textBox.TextChanged += (sender, args) => OnTextChanged(args);
+            textBox.TextChanged += (sender, args) =>
+            {
+                if (ReferenceEquals(textBox, _activeTextBox))
+                {
+                    OnTextChanged(args);
+                }
+            };
             textBox.KeyDown += (sender, args) => OnKeyDown(args);
             textBox.MouseClick += (sender, args) => OnMouseClick(args);
             textBox.Enter += (sender, args) => OnEnter(args);
@@ -107,8 +160,24 @@ namespace Nikse.SubtitleEdit.Controls
             try
             {
                 var f = gs.SubtitleTextBoxFontBold ? new Font(gs.SubtitleFontName, gs.SubtitleTextBoxFontSize, FontStyle.Bold) : new Font(gs.SubtitleFontName, gs.SubtitleTextBoxFontSize);
-                TextBoxFont = f;
-                textBox.Font = f;
+                if (textBox == this)
+                {
+                    textBox = GetActiveTextBox();
+                }
+
+                if (textBox != null && !textBox.Font.Equals(f))
+                {
+                    textBox.Font = f;
+                }
+                else
+                {
+                    f.Dispose();
+                }
+
+                if (textBox == null)
+                {
+                    return;
+                }
                 textBox.ForeColor = gs.SubtitleFontColor;
                 textBox.BackColor = gs.SubtitleBackgroundColor;
             }
@@ -141,7 +210,7 @@ namespace Nikse.SubtitleEdit.Controls
             set
             {
                 var tb = GetActiveTextBox();
-                if (tb != null)
+                if (tb != null && tb.Text != (value ?? string.Empty))
                 {
                     tb.Text = value;
                 }
@@ -535,6 +604,7 @@ namespace Nikse.SubtitleEdit.Controls
 
             activeTextBox.BackColor = DarkTheme.BackColor;
             activeTextBox.ForeColor = DarkTheme.ForeColor;
+            activeTextBox.HandleCreated -= SeTextBoxBoxHandleCreated;
             activeTextBox.HandleCreated += SeTextBoxBoxHandleCreated;
             DarkTheme.SetWindowThemeDark(activeTextBox);
             DarkTheme.SetWindowThemeDark(this);
@@ -558,15 +628,7 @@ namespace Nikse.SubtitleEdit.Controls
 
         public void ScrollToCaret() => GetActiveTextBox()?.ScrollToCaret();
 
-        private TextBoxBase GetActiveTextBox()
-        {
-            if (_uiTextBox != null)
-            {
-                return _uiTextBox;
-            }
-
-            return _simpleTextBox;
-        }
+        private TextBoxBase GetActiveTextBox() => _activeTextBox;
 
         protected override void Dispose(bool disposing)
         {
@@ -576,6 +638,7 @@ namespace Nikse.SubtitleEdit.Controls
                 _simpleTextBox?.Dispose();
                 _uiTextBox = null;
                 _simpleTextBox = null;
+                _activeTextBox = null;
             }
 
             base.Dispose(disposing);

@@ -18,7 +18,7 @@ namespace Nikse.SubtitleEdit.Core.Forms
             {
                 if (!lastMerged)
                 {
-                    p = new Paragraph(subtitle.GetParagraphOrDefault(i - 1));
+                    p = new Paragraph(subtitle.GetParagraphOrDefault(i - 1), false);
                     mergedSubtitle.Paragraphs.Add(p);
                 }
                 var next = subtitle.GetParagraphOrDefault(i);
@@ -99,7 +99,7 @@ namespace Nikse.SubtitleEdit.Core.Forms
 
             if (!lastMerged && subtitle.Paragraphs.Count > 0)
             {
-                mergedSubtitle.Paragraphs.Add(new Paragraph(subtitle.GetParagraphOrDefault(subtitle.Paragraphs.Count - 1)));
+                mergedSubtitle.Paragraphs.Add(new Paragraph(subtitle.GetParagraphOrDefault(subtitle.Paragraphs.Count - 1), false));
             }
 
             mergedSubtitle.Renumber();

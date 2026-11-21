@@ -55,7 +55,7 @@ namespace Nikse.SubtitleEdit.Forms.Ocr
                 Multiselect = true
             })
             {
-                if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("WordSplitDictionaryGenerator.buttonInputBrowse", this) == DialogResult.OK)
                 {
                     try
                     {

@@ -82,7 +82,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.Multiselect = false;
             openFileDialog1.Filter = _language.IfoFiles + "|*.IFO";
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK && File.Exists(openFileDialog1.FileName))
+            if (openFileDialog1.ShowDialogWithLastFolder("DvdSubRip.ButtonOpenIfo") == DialogResult.OK && File.Exists(openFileDialog1.FileName))
             {
                 OpenIfoFile(openFileDialog1.FileName);
             }
@@ -445,7 +445,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.Filter = _language.VobFiles + "|*.VOB";
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Multiselect = true;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK && File.Exists(openFileDialog1.FileName))
+            if (openFileDialog1.ShowDialogWithLastFolder("DvdSubRip.ButtonAddVobFile") == DialogResult.OK && File.Exists(openFileDialog1.FileName))
             {
                 foreach (var fileName in openFileDialog1.FileNames)
                 {

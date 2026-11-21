@@ -165,7 +165,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.FileName = string.Empty;
 
-            if (openFileDialog1.ShowDialog() != DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("Compare.ButtonOpenSubtitle1") != DialogResult.OK)
             {
                 return;
             }
@@ -195,7 +195,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.FileName = string.Empty;
 
-            if (openFileDialog1.ShowDialog() != DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("Compare.ButtonOpenSubtitle2") != DialogResult.OK)
             {
                 return;
             }

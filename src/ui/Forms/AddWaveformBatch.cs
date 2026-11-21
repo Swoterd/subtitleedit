@@ -106,7 +106,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
             openFileDialog1.Multiselect = true;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("AddWaveformBatch.buttonInputBrowse", this) == DialogResult.OK)
             {
                 foreach (var fileName in openFileDialog1.FileNames.OrderBy(Path.GetFileName))
                 {

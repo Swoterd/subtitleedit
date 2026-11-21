@@ -77,7 +77,7 @@ namespace Nikse.SubtitleEdit.Forms
 
         private void ButtonImportClick(object sender, EventArgs e)
         {
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("ExportTextST.ButtonImport", this) == DialogResult.OK)
             {
                 _textST = new TextST();
                 if (!_textST.IsMine(null, openFileDialog1.FileName))

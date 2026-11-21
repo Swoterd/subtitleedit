@@ -375,7 +375,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
             openFileDialog1.Multiselect = true;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("JoinSubtitles.ButtonAddSubtitle", this) == DialogResult.OK)
             {
                 var sb = new StringBuilder();
                 var fileNames = openFileDialog1.FileNames.ToList();

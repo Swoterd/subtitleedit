@@ -1352,7 +1352,7 @@ namespace Nikse.SubtitleEdit.Forms.Assa
                     openFileDialog1.FileName = labelFileName.Text;
                 }
 
-                if (openFileDialog1.ShowDialog() != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("AssSetBackground.buttonChooseDrawing") != DialogResult.OK)
                 {
                     return;
                 }

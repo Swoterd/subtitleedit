@@ -30,12 +30,12 @@ namespace Nikse.SubtitleEdit.Core.Common
         {
             Index = index;
             Timestamp = DateTime.Now;
-            Subtitle = new Subtitle(subtitle);
+            Subtitle = new Subtitle(subtitle, false);
             Description = description;
             FileName = fileName;
             FileModified = fileModified;
             SubtitleFormatFriendlyName = subtitleFormatFriendlyName;
-            OriginalSubtitle = new Subtitle(originalSubtitle);
+            OriginalSubtitle = new Subtitle(originalSubtitle, false);
             OriginalSubtitleFileName = originalSubtitleFileName;
             LineIndex = lineIndex;
             LinePosition = linePosition;

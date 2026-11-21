@@ -1022,7 +1022,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = GetSubtitleFilter();
                 openFileDialog1.Multiselect = true;
-                if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateTransparentVideoWithSubtitles.buttonAddFile", this) != DialogResult.OK)
                 {
                     return;
                 }
@@ -1497,7 +1497,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
 
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateTransparentVideoWithSubtitles.buttonCutFrom") == DialogResult.OK)
                 {
                     OpenCutFrom(openFileDialog1.FileName);
                 }
@@ -1534,7 +1534,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
 
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateTransparentVideoWithSubtitles.buttonCutTo") == DialogResult.OK)
                 {
                     OpenCutTo(openFileDialog1.FileName);
                 }
@@ -1638,7 +1638,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(false);
                 openFileDialog1.Multiselect = false;
-                if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateTransparentVideoWithSubtitles.pickVideoFileToolStripMenuItem", this) != DialogResult.OK)
                 {
                     return;
                 }
@@ -1673,7 +1673,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
 
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateTransparentVideoWithSubtitles.buttonCutFromText") == DialogResult.OK)
                 {
                     var subtitle = Subtitle.Parse(openFileDialog1.FileName);
                     CutFromText(subtitle);
@@ -1738,7 +1738,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
 
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateTransparentVideoWithSubtitles.buttonCutToText") == DialogResult.OK)
                 {
                     var subtitle = Subtitle.Parse(openFileDialog1.FileName);
                     CutToText(subtitle);

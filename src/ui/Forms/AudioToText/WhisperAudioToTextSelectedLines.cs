@@ -500,7 +500,7 @@ namespace Nikse.SubtitleEdit.Forms.AudioToText
                         openFileDialog1.FileName = string.Empty;
                         openFileDialog1.Filter = "whisper.exe|whisper.exe";
 
-                        if (openFileDialog1.ShowDialog() != DialogResult.OK || !openFileDialog1.FileName.EndsWith("whisper.exe", StringComparison.OrdinalIgnoreCase))
+                        if (openFileDialog1.ShowDialogWithLastFolder("WhisperAudioToTextSelectedLines.WhisperPhpOriginalChoose") != DialogResult.OK || !openFileDialog1.FileName.EndsWith("whisper.exe", StringComparison.OrdinalIgnoreCase))
                         {
                             Configuration.Settings.Tools.WhisperChoice = WhisperChoice.Cpp;
                             comboBoxWhisperEngine.Text = WhisperChoice.Cpp;
@@ -531,7 +531,7 @@ namespace Nikse.SubtitleEdit.Forms.AudioToText
                         openFileDialog1.FileName = string.Empty;
                         openFileDialog1.Filter = "whisperx.exe|whisperx.exe";
 
-                        if (openFileDialog1.ShowDialog() != DialogResult.OK || !openFileDialog1.FileName.EndsWith("whisperx.exe", StringComparison.OrdinalIgnoreCase))
+                        if (openFileDialog1.ShowDialogWithLastFolder("WhisperAudioToTextSelectedLines.WhisperEngineWhisperX") != DialogResult.OK || !openFileDialog1.FileName.EndsWith("whisperx.exe", StringComparison.OrdinalIgnoreCase))
                         {
                             Configuration.Settings.Tools.WhisperChoice = WhisperChoice.Cpp;
                             comboBoxWhisperEngine.Text = WhisperChoice.Cpp;
@@ -563,7 +563,7 @@ namespace Nikse.SubtitleEdit.Forms.AudioToText
                         openFileDialog1.FileName = string.Empty;
                         openFileDialog1.Filter = "stable-ts.exe|stable-ts.exe";
 
-                        if (openFileDialog1.ShowDialog() != DialogResult.OK
+                        if (openFileDialog1.ShowDialogWithLastFolder("WhisperAudioToTextSelectedLines.WhisperEngineStableTs") != DialogResult.OK
                             || !openFileDialog1.FileName.EndsWith("stable-ts.exe", StringComparison.OrdinalIgnoreCase))
                         {
                             Configuration.Settings.Tools.WhisperChoice = WhisperChoice.Cpp;
@@ -633,7 +633,7 @@ namespace Nikse.SubtitleEdit.Forms.AudioToText
                         openFileDialog1.FileName = string.Empty;
                         openFileDialog1.Filter = "whisper-ctranslate2.exe|whisper-ctranslate2.exe";
 
-                        if (openFileDialog1.ShowDialog() != DialogResult.OK || !openFileDialog1.FileName.EndsWith("whisper-ctranslate2.exe", StringComparison.OrdinalIgnoreCase))
+                        if (openFileDialog1.ShowDialogWithLastFolder("WhisperAudioToTextSelectedLines.WhisperEngineCTranslate2") != DialogResult.OK || !openFileDialog1.FileName.EndsWith("whisper-ctranslate2.exe", StringComparison.OrdinalIgnoreCase))
                         {
                             Configuration.Settings.Tools.WhisperChoice = WhisperChoice.Cpp;
                             comboBoxWhisperEngine.Text = WhisperChoice.Cpp;

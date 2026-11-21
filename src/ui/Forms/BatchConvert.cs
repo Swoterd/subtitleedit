@@ -782,7 +782,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
             openFileDialog1.Multiselect = true;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("BatchConvert.buttonInputBrowse", this) == DialogResult.OK)
             {
                 try
                 {
@@ -4117,7 +4117,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog1.Title = LanguageSettings.Current.Main.OpenAnsiSubtitle;
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.Filter = UiUtil.SubtitleExtensionFilter.Value;
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("BatchConvert.buttonBrowseEncoding", this) == DialogResult.OK)
             {
                 using (var chooseEncoding = new ChooseEncoding())
                 {
@@ -4218,7 +4218,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(false);
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("BatchConvert.buttonGetResolutionFromVideo") == DialogResult.OK)
                 {
                     var info = UiUtil.GetVideoInfo(openFileDialog1.FileName);
                     if (info != null && info.Success)

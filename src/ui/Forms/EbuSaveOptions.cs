@@ -419,7 +419,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.Filter = "EBU STL files (*.stl)|*.stl";
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("EbuSaveOptions.buttonImport") == DialogResult.OK)
             {
                 FillHeaderFromFile(openFileDialog1.FileName);
             }

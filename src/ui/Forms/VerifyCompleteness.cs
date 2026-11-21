@@ -149,7 +149,7 @@ namespace Nikse.SubtitleEdit.Forms
             openFileDialog.Title = LanguageSettings.Current.VerifyCompleteness.OpenControlSubtitle;
             openFileDialog.FileName = string.Empty;
             openFileDialog.Filter = UiUtil.SubtitleExtensionFilter.Value;
-            if (openFileDialog.ShowDialog(this) != DialogResult.OK)
+            if (openFileDialog.ShowDialogWithLastFolder("VerifyCompleteness.buttonOpenControlSubtitle", this) != DialogResult.OK)
             {
                 return;
             }

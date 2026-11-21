@@ -126,7 +126,7 @@ namespace Nikse.SubtitleEdit.Forms
         {
             openFileDialog1.Filter = "Cavena 890 (*.890)|*.890";
             openFileDialog1.FileName = string.Empty;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("Cavena890SaveOptions.buttonImport") == DialogResult.OK)
             {
                 var buffer = FileUtil.ReadAllBytesShared(openFileDialog1.FileName);
                 if (buffer.Length > 270)

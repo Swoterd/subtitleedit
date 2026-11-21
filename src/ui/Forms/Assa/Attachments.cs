@@ -302,7 +302,7 @@ namespace Nikse.SubtitleEdit.Forms.Assa
             openFileDialog1.Filter = $"{LanguageSettings.Current.AssaAttachments.FontsAndImages}|*.ttf;*{string.Join(";*", _imageExtensions).TrimEnd('*')}|{LanguageSettings.Current.General.Fonts}|*.ttf|{LanguageSettings.Current.General.Images}|*{string.Join(";*", _imageExtensions).TrimEnd('*')}";
             openFileDialog1.FilterIndex = 0;
             openFileDialog1.Multiselect = true;
-            var result = openFileDialog1.ShowDialog(this);
+            var result = openFileDialog1.ShowDialogWithLastFolder("Attachments.buttonAttachFile", this);
             if (result != DialogResult.OK || !File.Exists(openFileDialog1.FileName))
             {
                 return;
@@ -363,7 +363,7 @@ namespace Nikse.SubtitleEdit.Forms.Assa
             openFileDialog1.Filter = AdvancedSubStationAlpha.NameOfFormat + "|*.ass|" + SubStationAlpha.NameOfFormat + "|*.ssa;";
             openFileDialog1.FilterIndex = 0;
             openFileDialog1.Multiselect = false;
-            var result = openFileDialog1.ShowDialog(this);
+            var result = openFileDialog1.ShowDialogWithLastFolder("Attachments.buttonImport", this);
             if (result != DialogResult.OK || !File.Exists(openFileDialog1.FileName))
             {
                 return;

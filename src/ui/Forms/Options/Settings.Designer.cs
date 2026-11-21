@@ -90,6 +90,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             this.checkBoxAutoWrapWhileTyping = new System.Windows.Forms.CheckBox();
             this.checkBoxPromptDeleteLines = new System.Windows.Forms.CheckBox();
             this.checkBoxAllowEditOfOriginalSubtitle = new System.Windows.Forms.CheckBox();
+            this.checkBoxAlignOriginalSubtitleTimingOnOpen = new System.Windows.Forms.CheckBox();
             this.comboBoxSpellChecker = new Nikse.SubtitleEdit.Controls.NikseComboBox();
             this.comboBoxAutoBackup = new Nikse.SubtitleEdit.Controls.NikseComboBox();
             this.labelAutoBackup = new System.Windows.Forms.Label();
@@ -238,6 +239,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             this.comboBoxSpectrogramAppearance = new Nikse.SubtitleEdit.Controls.NikseComboBox();
             this.labelSpectrogramOpacity = new System.Windows.Forms.Label();
             this.trackBarSpectrogramOpacity = new System.Windows.Forms.TrackBar();
+            this.checkBoxSpectrogramAegisubMode = new System.Windows.Forms.CheckBox();
             this.checkBoxGenerateSpectrogram = new System.Windows.Forms.CheckBox();
             this.groupBoxSpectrogramClean = new System.Windows.Forms.GroupBox();
             this.buttonWaveformsFolderEmpty = new System.Windows.Forms.Button();
@@ -677,6 +679,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             this.groupBoxMiscellaneous.Controls.Add(this.textBoxShowLineBreaksAs);
             this.groupBoxMiscellaneous.Controls.Add(this.checkBoxAutoWrapWhileTyping);
             this.groupBoxMiscellaneous.Controls.Add(this.checkBoxPromptDeleteLines);
+            this.groupBoxMiscellaneous.Controls.Add(this.checkBoxAlignOriginalSubtitleTimingOnOpen);
             this.groupBoxMiscellaneous.Controls.Add(this.checkBoxAllowEditOfOriginalSubtitle);
             this.groupBoxMiscellaneous.Controls.Add(this.comboBoxSpellChecker);
             this.groupBoxMiscellaneous.Controls.Add(this.comboBoxAutoBackup);
@@ -1598,7 +1601,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             // 
             this.textBoxShowLineBreaksAs.BackColor = System.Drawing.SystemColors.Window;
             this.textBoxShowLineBreaksAs.FocusedColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
-            this.textBoxShowLineBreaksAs.Location = new System.Drawing.Point(572, 233);
+            this.textBoxShowLineBreaksAs.Location = new System.Drawing.Point(572, 240);
             this.textBoxShowLineBreaksAs.MaxLength = 10;
             this.textBoxShowLineBreaksAs.Multiline = true;
             this.textBoxShowLineBreaksAs.Name = "textBoxShowLineBreaksAs";
@@ -1608,7 +1611,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             // checkBoxAutoWrapWhileTyping
             // 
             this.checkBoxAutoWrapWhileTyping.AutoSize = true;
-            this.checkBoxAutoWrapWhileTyping.Location = new System.Drawing.Point(419, 210);
+            this.checkBoxAutoWrapWhileTyping.Location = new System.Drawing.Point(419, 219);
             this.checkBoxAutoWrapWhileTyping.Name = "checkBoxAutoWrapWhileTyping";
             this.checkBoxAutoWrapWhileTyping.Size = new System.Drawing.Size(137, 17);
             this.checkBoxAutoWrapWhileTyping.TabIndex = 15;
@@ -1618,7 +1621,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             // checkBoxPromptDeleteLines
             // 
             this.checkBoxPromptDeleteLines.AutoSize = true;
-            this.checkBoxPromptDeleteLines.Location = new System.Drawing.Point(419, 187);
+            this.checkBoxPromptDeleteLines.Location = new System.Drawing.Point(419, 201);
             this.checkBoxPromptDeleteLines.Name = "checkBoxPromptDeleteLines";
             this.checkBoxPromptDeleteLines.Size = new System.Drawing.Size(142, 17);
             this.checkBoxPromptDeleteLines.TabIndex = 14;
@@ -1634,6 +1637,17 @@ namespace Nikse.SubtitleEdit.Forms.Options
             this.checkBoxAllowEditOfOriginalSubtitle.TabIndex = 13;
             this.checkBoxAllowEditOfOriginalSubtitle.Text = "Allow edit of original subtitle";
             this.checkBoxAllowEditOfOriginalSubtitle.UseVisualStyleBackColor = true;
+            this.checkBoxAllowEditOfOriginalSubtitle.CheckedChanged += new System.EventHandler(this.checkBoxAllowEditOfOriginalSubtitle_CheckedChanged);
+            //
+            // checkBoxAlignOriginalSubtitleTimingOnOpen
+            //
+            this.checkBoxAlignOriginalSubtitleTimingOnOpen.AutoSize = true;
+            this.checkBoxAlignOriginalSubtitleTimingOnOpen.Location = new System.Drawing.Point(427, 182);
+            this.checkBoxAlignOriginalSubtitleTimingOnOpen.Name = "checkBoxAlignOriginalSubtitleTimingOnOpen";
+            this.checkBoxAlignOriginalSubtitleTimingOnOpen.Size = new System.Drawing.Size(310, 17);
+            this.checkBoxAlignOriginalSubtitleTimingOnOpen.TabIndex = 14;
+            this.checkBoxAlignOriginalSubtitleTimingOnOpen.Text = "Align original subtitle timing to the main subtitle when opened";
+            this.checkBoxAlignOriginalSubtitleTimingOnOpen.UseVisualStyleBackColor = true;
             // 
             // comboBoxSpellChecker
             // 
@@ -1768,7 +1782,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             // labelShowLineBreaksAs
             // 
             this.labelShowLineBreaksAs.AutoSize = true;
-            this.labelShowLineBreaksAs.Location = new System.Drawing.Point(416, 236);
+            this.labelShowLineBreaksAs.Location = new System.Drawing.Point(416, 243);
             this.labelShowLineBreaksAs.Name = "labelShowLineBreaksAs";
             this.labelShowLineBreaksAs.Size = new System.Drawing.Size(150, 13);
             this.labelShowLineBreaksAs.TabIndex = 16;
@@ -3698,6 +3712,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             this.groupBoxSpectrogram.Controls.Add(this.comboBoxSpectrogramAppearance);
             this.groupBoxSpectrogram.Controls.Add(this.labelSpectrogramOpacity);
             this.groupBoxSpectrogram.Controls.Add(this.trackBarSpectrogramOpacity);
+            this.groupBoxSpectrogram.Controls.Add(this.checkBoxSpectrogramAegisubMode);
             this.groupBoxSpectrogram.Controls.Add(this.checkBoxGenerateSpectrogram);
             this.groupBoxSpectrogram.Location = new System.Drawing.Point(0, 293);
             this.groupBoxSpectrogram.Name = "groupBoxSpectrogram";
@@ -3761,6 +3776,16 @@ namespace Nikse.SubtitleEdit.Forms.Options
             this.trackBarSpectrogramOpacity.TickStyle = System.Windows.Forms.TickStyle.None;
             this.trackBarSpectrogramOpacity.TabIndex = 1;
             this.trackBarSpectrogramOpacity.ValueChanged += new System.EventHandler(this.TrackBarSpectrogramOpacityValueChanged);
+            // 
+            // checkBoxSpectrogramAegisubMode
+            // 
+            this.checkBoxSpectrogramAegisubMode.AutoSize = true;
+            this.checkBoxSpectrogramAegisubMode.Location = new System.Drawing.Point(170, 20);
+            this.checkBoxSpectrogramAegisubMode.Name = "checkBoxSpectrogramAegisubMode";
+            this.checkBoxSpectrogramAegisubMode.Size = new System.Drawing.Size(219, 17);
+            this.checkBoxSpectrogramAegisubMode.TabIndex = 3;
+            this.checkBoxSpectrogramAegisubMode.Text = "Aegisub mode: show video keyframes/I-frames";
+            this.checkBoxSpectrogramAegisubMode.UseVisualStyleBackColor = true;
             // 
             // checkBoxGenerateSpectrogram
             // 
@@ -3863,7 +3888,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             this.checkBoxWaveformAutoGen.TabIndex = 28;
             this.checkBoxWaveformAutoGen.Text = "Auto gen waveform when opening video";
             this.checkBoxWaveformAutoGen.UseVisualStyleBackColor = true;
-            // 
+            //
             // panelWaveformCursorColor
             // 
             this.panelWaveformCursorColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -7240,6 +7265,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
         private System.Windows.Forms.Label labelSpellChecker;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.CheckBox checkBoxAllowEditOfOriginalSubtitle;
+        private System.Windows.Forms.CheckBox checkBoxAlignOriginalSubtitleTimingOnOpen;
         private System.Windows.Forms.Label labelMergeShortLines;
         private Nikse.SubtitleEdit.Controls.NikseComboBox comboBoxMergeShortLineLength;
         private System.Windows.Forms.CheckBox checkBoxAutoWrapWhileTyping;
@@ -7264,6 +7290,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
         private Nikse.SubtitleEdit.Controls.NikseComboBox comboBoxSpectrogramAppearance;
         private System.Windows.Forms.Label labelSpectrogramOpacity;
         private System.Windows.Forms.TrackBar trackBarSpectrogramOpacity;
+        private System.Windows.Forms.CheckBox checkBoxSpectrogramAegisubMode;
         private System.Windows.Forms.CheckBox checkBoxReverseMouseWheelScrollDirection;
         private System.Windows.Forms.Label labelMaxDuration;
         private System.Windows.Forms.Label labelMinDuration;

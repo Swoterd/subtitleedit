@@ -62,7 +62,7 @@ namespace Nikse.SubtitleEdit.Forms.Ocr
 
         private void buttonInputChoose_Click(object sender, EventArgs e)
         {
-            if (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialog1.ShowDialogWithLastFolder("VobSubNOcrTrain.buttonInputChoose", this) == DialogResult.OK)
             {
                 textBoxInputFile.Text = openFileDialog1.FileName;
             }

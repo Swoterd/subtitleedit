@@ -19,11 +19,14 @@ namespace Nikse.SubtitleEdit.Core.Settings
         public bool WaveformDrawCps { get; set; }
         public bool WaveformDrawWpm { get; set; }
         public bool WaveformAllowOverlap { get; set; }
+        public bool WaveformAutoLinkAdjacentBoundaries { get; set; }
+        public int WaveformAutoLinkAdjacentBoundariesThresholdMs { get; set; }
         public bool WaveformFocusOnMouseEnter { get; set; }
         public bool WaveformListViewFocusOnMouseEnter { get; set; }
         public bool WaveformSetVideoPositionOnMoveStartEnd { get; set; }
         public bool WaveformSingleClickSelect { get; set; }
         public bool WaveformSnapToShotChanges { get; set; }
+        public bool SpectrogramAegisubMode { get; set; }
         public int WaveformShotChangeStartTimeBeforeMs { get; set; }
         public int WaveformShotChangeStartTimeAfterMs { get; set; }
         public int WaveformShotChangeEndTimeBeforeMs { get; set; }
@@ -65,6 +68,8 @@ namespace Nikse.SubtitleEdit.Core.Settings
             LastActiveTab = "Translate";
             WaveformDrawGrid = true;
             WaveformAllowOverlap = false;
+            WaveformAutoLinkAdjacentBoundaries = false;
+            WaveformAutoLinkAdjacentBoundariesThresholdMs = 100;
             WaveformBorderHitMs = 15;
             WaveformGridColor = Color.FromArgb(255, 20, 20, 18);
             WaveformColor = Color.FromArgb(255, 160, 240, 30);

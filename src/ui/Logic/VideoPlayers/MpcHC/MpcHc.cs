@@ -19,6 +19,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
         private string _playMode = string.Empty;
         private int _loaded;
         private IntPtr _mpcHandle = IntPtr.Zero;
+        private IntPtr _mainWindowHandle = IntPtr.Zero;
         private IntPtr _videoHandle = IntPtr.Zero;
         private IntPtr _videoPanelHandle = IntPtr.Zero;
         private ProcessStartInfo _startInfo;
@@ -27,11 +28,16 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
         private string _videoFileName;
         private Timer _positionTimer;
         private double _positionInSeconds;
+        private double? _queuedSeekPosition;
+        private double? _activeSeekPosition;
+        private bool _resumeAfterSeek;
+        private bool _seekContinuationScheduled;
         private double _durationInSeconds;
         private double _currentPlayRate = 1.0;
         private MessageHandlerWindow _form;
-        private int _initialWidth;
-        private int _initialHeight;
+        private Control _ownerControl;
+        private int _lastLoggedResizeWidth = -1;
+        private int _lastLoggedResizeHeight = -1;
         private Timer _hideMpcTimer = new Timer();
         private int _hideMpcTimerCount;
 
@@ -62,7 +68,26 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
         public override double CurrentPosition
         {
             get => _positionInSeconds;
-            set => SendMpcMessage(MpcHcCommand.SetPosition, string.Format(CultureInfo.InvariantCulture, "{0:0.000}", value));
+            set
+            {
+                if (double.IsNaN(value) || double.IsInfinity(value) || _mpcHandle == IntPtr.Zero)
+                {
+                    return;
+                }
+
+                var resume = _resumeAfterSeek || IsPlaying;
+                if (!_activeSeekPosition.HasValue && IsPlaying)
+                {
+                    Pause();
+                }
+
+                value = Math.Max(0, _durationInSeconds > 0 ? Math.Min(value, _durationInSeconds) : value);
+                _positionInSeconds = value;
+                _queuedSeekPosition = value;
+                _resumeAfterSeek = resume;
+                _playMode = resume ? ModePlay : ModePause;
+                ContinuePendingSeek();
+            }
         }
 
         public override double PlayRate
@@ -81,18 +106,85 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
         public override void Play()
         {
             _playMode = ModePlay;
-            SendMpcMessage(MpcHcCommand.Play);
+            if (_activeSeekPosition.HasValue || _queuedSeekPosition.HasValue || _seekContinuationScheduled)
+            {
+                _resumeAfterSeek = true;
+                return;
+            }
+
+            SendPlayerCommand(MpcHcCommand.PlayWindowCommand);
         }
 
         public override void Pause()
         {
+            _resumeAfterSeek = false;
             _playMode = ModePause;
-            SendMpcMessage(MpcHcCommand.Pause);
+            SendPlayerCommand(MpcHcCommand.PauseWindowCommand);
         }
 
         public override void Stop()
         {
+            _resumeAfterSeek = false;
+            _queuedSeekPosition = null;
+            _activeSeekPosition = null;
+            _playMode = ModePause;
             SendMpcMessage(MpcHcCommand.Stop);
+        }
+
+        private void ContinuePendingSeek()
+        {
+            if (_activeSeekPosition.HasValue || _seekContinuationScheduled || _mpcHandle == IntPtr.Zero || _loaded < 2)
+            {
+                return;
+            }
+
+            if (_queuedSeekPosition.HasValue)
+            {
+                var position = _queuedSeekPosition.Value;
+                _queuedSeekPosition = null;
+                _activeSeekPosition = position;
+                SendMpcMessage(MpcHcCommand.SetPosition, position.ToString("0.000", CultureInfo.InvariantCulture));
+            }
+            else if (_resumeAfterSeek)
+            {
+                _resumeAfterSeek = false;
+                Play();
+            }
+        }
+
+        private void CompletePendingSeek(double position)
+        {
+            if (!_activeSeekPosition.HasValue)
+            {
+                return;
+            }
+
+            _activeSeekPosition = null;
+            if (!_queuedSeekPosition.HasValue)
+            {
+                _positionInSeconds = position;
+            }
+
+            // The notification arrives inside MPC's seek command. Continue after its call returns.
+            if (!_seekContinuationScheduled && _form != null && !_form.IsDisposed && _form.IsHandleCreated)
+            {
+                _seekContinuationScheduled = true;
+                _form.BeginInvoke(new Action(() =>
+                {
+                    _seekContinuationScheduled = false;
+                    ContinuePendingSeek();
+                }));
+            }
+        }
+
+        private void SendPlayerCommand(int command)
+        {
+            if (_mpcHandle != IntPtr.Zero)
+            {
+                // The public Play/Pause API posts WM_COMMAND internally and can race a following seek.
+                const int wmCommand = 0x0111;
+                NativeMethods.SendMessage(_mpcHandle, wmCommand, new IntPtr(command), IntPtr.Zero);
+            }
         }
 
         public override bool IsPaused => _playMode == ModePause;
@@ -110,8 +202,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             OnVideoLoaded = onVideoLoaded;
             OnVideoEnded = onVideoEnded;
 
-            _initialWidth = ownerControl.Width;
-            _initialHeight = ownerControl.Height;
+            _ownerControl = ownerControl;
             _form = new MessageHandlerWindow();
             _form.OnCopyData += OnCopyData;
             _form.Show();
@@ -119,6 +210,8 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             _videoPanelHandle = ownerControl.Handle;
             _messageHandlerHandle = _form.Handle;
             _videoFileName = videoFileName;
+            _positionTimer = new Timer { Interval = 100 };
+            _positionTimer.Tick += PositionTimerTick;
             _startInfo = new ProcessStartInfo
             {
                 FileName = GetMpcFileName(),
@@ -126,9 +219,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             };
             _process = Process.Start(_startInfo);
             _process?.WaitForInputIdle();
-
-            _positionTimer = new Timer { Interval = 100 };
-            _positionTimer.Tick += PositionTimerTick;
+            CacheMainWindowHandle();
         }
 
         private void PositionTimerTick(object sender, EventArgs e)
@@ -151,13 +242,15 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             switch (command)
             {
                 case MpcHcCommand.Connect:
-                    _positionTimer.Stop();
+                    _positionTimer?.Stop();
                     _mpcHandle = (IntPtr)Convert.ToInt64(Marshal.PtrToStringAuto(cds.lpData));
                     SendMpcMessage(MpcHcCommand.OpenFile, _videoFileName);
-                    _positionTimer.Start();
+                    _positionTimer?.Start();
                     break;
                 case MpcHcCommand.PlayMode:
-                    _playMode = param;
+                    _playMode = _activeSeekPosition.HasValue || _queuedSeekPosition.HasValue || _seekContinuationScheduled
+                        ? (_resumeAfterSeek ? ModePlay : ModePause)
+                        : param;
                     if (param == ModePlay && _loaded == 0)
                     {
                         _loaded = 1;
@@ -167,7 +260,6 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                             HijackMpcHc();
                         }
                     }
-                    Application.DoEvents();
                     HideMpcPlayerWindow();
                     break;
                 case MpcHcCommand.NowPlaying:
@@ -185,7 +277,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                             _durationInSeconds = d;
                         }
 
-                        Resize(_initialWidth, _initialHeight);
+                        ResizeToOwnerControl();
                         OnVideoLoaded?.Invoke(this, EventArgs.Empty);
 
                         SendMpcMessage(MpcHcCommand.SetSubtitleTrack, "-1");
@@ -206,14 +298,21 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                         };
                         _hideMpcTimer.Start();
                         Pause();
+                        ContinuePendingSeek();
                     }
                     break;
                 case MpcHcCommand.NotifyEndOfStream:
                     OnVideoEnded?.Invoke(this, EventArgs.Empty);
 
                     break;
+                case MpcHcCommand.NotifySeek:
+                    if (double.TryParse(param?.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out var seekPosition))
+                    {
+                        CompletePendingSeek(seekPosition);
+                    }
+                    break;
                 case MpcHcCommand.CurrentPosition:
-                    if (!string.IsNullOrWhiteSpace(param))
+                    if (!_activeSeekPosition.HasValue && !_queuedSeekPosition.HasValue && !string.IsNullOrWhiteSpace(param))
                     {
                         if (double.TryParse(param.Replace(",", "."), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var d))
                         {
@@ -224,10 +323,53 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             }
         }
 
+        private void ResizeToOwnerControl()
+        {
+            if (_ownerControl == null || _ownerControl.IsDisposed)
+            {
+                return;
+            }
+
+            Resize(_ownerControl.Width, _ownerControl.Height);
+        }
+
         private void HideMpcPlayerWindow()
         {
-            NativeMethods.ShowWindow(_process.MainWindowHandle, NativeMethods.ShowWindowCommands.Hide);
-            NativeMethods.SetWindowPos(_process.MainWindowHandle, (IntPtr)NativeMethods.SpecialWindowHandles.HWND_TOP, -9999, -9999, 0, 0, NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE);
+            var handle = GetMainWindowHandle();
+            if (handle == IntPtr.Zero)
+            {
+                return;
+            }
+
+            NativeMethods.ShowWindow(handle, NativeMethods.ShowWindowCommands.Hide);
+            NativeMethods.SetWindowPos(handle, (IntPtr)NativeMethods.SpecialWindowHandles.HWND_TOP, -9999, -9999, 0, 0, NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE);
+        }
+
+        private IntPtr GetMainWindowHandle()
+        {
+            if (_mainWindowHandle != IntPtr.Zero)
+            {
+                return _mainWindowHandle;
+            }
+
+            return CacheMainWindowHandle();
+        }
+
+        private IntPtr CacheMainWindowHandle()
+        {
+            if (_process == null || _process.HasExited)
+            {
+                return IntPtr.Zero;
+            }
+
+            _process.Refresh();
+            var handle = _process.MainWindowHandle;
+            if (handle != IntPtr.Zero)
+            {
+                _mainWindowHandle = handle;
+            }
+
+            return _mainWindowHandle;
         }
 
         internal static bool GetWindowHandle(IntPtr windowHandle, ArrayList windowHandles)
@@ -238,9 +380,14 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
 
         private ArrayList GetChildWindows()
         {
+            return GetChildWindows(GetMainWindowHandle());
+        }
+
+        private static ArrayList GetChildWindows(IntPtr parentHandle)
+        {
             var windowHandles = new ArrayList();
             NativeMethods.EnumedWindow callBackPtr = GetWindowHandle;
-            NativeMethods.EnumChildWindows(_process.MainWindowHandle, callBackPtr, windowHandles);
+            NativeMethods.EnumChildWindows(parentHandle, callBackPtr, windowHandles);
             return windowHandles;
         }
 
@@ -264,7 +411,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
 
         private bool HijackMpcHc()
         {
-            IntPtr handle = _process.MainWindowHandle;
+            IntPtr handle = GetMainWindowHandle();
             var handles = GetChildWindows();
             foreach (var h in handles)
             {
@@ -288,9 +435,114 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                 return;
             }
 
-            NativeMethods.ShowWindow(_process.MainWindowHandle, NativeMethods.ShowWindowCommands.ShowNoActivate);
+            NativeMethods.ShowWindow(GetMainWindowHandle(), NativeMethods.ShowWindowCommands.ShowNoActivate);
             NativeMethods.SetWindowPos(_videoHandle, (IntPtr)NativeMethods.SpecialWindowHandles.HWND_TOP, 0, 0, width, height, NativeMethods.SetWindowPosFlags.SWP_NOREPOSITION);
             HideMpcPlayerWindow();
+        }
+
+        private static void ResizeChildWindows(IntPtr parentHandle, int width, int height)
+        {
+            foreach (var child in GetChildWindows(parentHandle))
+            {
+                var childHandle = (IntPtr)child;
+                NativeMethods.ShowWindow(childHandle, NativeMethods.ShowWindowCommands.ShowNoActivate);
+                NativeMethods.MoveWindow(childHandle, 0, 0, width, height, true);
+                NativeMethods.SetWindowPos(
+                    childHandle,
+                    IntPtr.Zero,
+                    0,
+                    0,
+                    width,
+                    height,
+                    NativeMethods.SetWindowPosFlags.SWP_NOZORDER |
+                    NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE |
+                    NativeMethods.SetWindowPosFlags.SWP_SHOWWINDOW |
+                    NativeMethods.SetWindowPosFlags.SWP_FRAMECHANGED);
+                NotifyResize(childHandle, width, height);
+            }
+        }
+
+        private static void NotifyResize(IntPtr handle, int width, int height)
+        {
+            var sizeParam = new IntPtr((height << 16) | (width & 0xffff));
+            NativeMethods.SendMessage(handle, NativeMethods.WindowsMessageSize, IntPtr.Zero, sizeParam);
+            NativeMethods.InvalidateRect(handle, IntPtr.Zero, true);
+        }
+
+        private void LogResizeState(string phase, int width, int height, bool force = false)
+        {
+            if (!force && _lastLoggedResizeWidth == width && _lastLoggedResizeHeight == height)
+            {
+                return;
+            }
+
+            _lastLoggedResizeWidth = width;
+            _lastLoggedResizeHeight = height;
+
+            try
+            {
+                var processState = _process == null ? "null" : (_process.HasExited ? "exited" : "running");
+                var mainWindowHandle = GetMainWindowHandle();
+
+                var rectText = "n/a";
+                if (_videoHandle != IntPtr.Zero && NativeMethods.GetWindowRect(_videoHandle, out var rect))
+                {
+                    rectText = $"{rect.Width}x{rect.Height}@{rect.Left},{rect.Top}";
+                }
+
+                var mainRectText = "n/a";
+                if (mainWindowHandle != IntPtr.Zero && NativeMethods.GetWindowRect(mainWindowHandle, out var mainRect))
+                {
+                    mainRectText = $"{mainRect.Width}x{mainRect.Height}@{mainRect.Left},{mainRect.Top}";
+                }
+
+                var childText = GetChildWindowDebugText(_videoHandle);
+                var fileName = Path.Combine(Configuration.DataDirectory, "video_resize_log.txt");
+                File.AppendAllText(fileName,
+                    $"{DateTime.Now:O} MpcHc.Resize.{phase} " +
+                    $"requested={width}x{height}, process={processState}, mainHandle=0x{mainWindowHandle.ToInt64():X}, " +
+                    $"mainRect={mainRectText}, videoHandle=0x{_videoHandle.ToInt64():X}, panelHandle=0x{_videoPanelHandle.ToInt64():X}, " +
+                    $"videoRect={rectText}, children={childText}{Environment.NewLine}");
+            }
+            catch
+            {
+                // Diagnostic logging must never affect playback.
+            }
+        }
+
+        private static string GetChildWindowDebugText(IntPtr parentHandle)
+        {
+            if (parentHandle == IntPtr.Zero)
+            {
+                return "n/a";
+            }
+
+            var result = new StringBuilder();
+            foreach (var child in GetChildWindows(parentHandle))
+            {
+                var childHandle = (IntPtr)child;
+                var className = new StringBuilder(256);
+                NativeMethods.GetClassName(childHandle, className, className.Capacity);
+                var rectText = "n/a";
+                if (NativeMethods.GetWindowRect(childHandle, out var rect))
+                {
+                    rectText = $"{rect.Width}x{rect.Height}@{rect.Left},{rect.Top}";
+                }
+
+                if (result.Length > 0)
+                {
+                    result.Append("; ");
+                }
+
+                result.Append("0x");
+                result.Append(childHandle.ToInt64().ToString("X", CultureInfo.InvariantCulture));
+                result.Append(":");
+                result.Append(className);
+                result.Append(":");
+                result.Append(rectText);
+            }
+
+            return result.Length == 0 ? "none" : result.ToString();
         }
 
         public static string GetMpcFileName()
@@ -538,6 +790,9 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                 if (disposing)
                 {
                     // release managed resources
+                    _queuedSeekPosition = null;
+                    _activeSeekPosition = null;
+                    _resumeAfterSeek = false;
                     if (_positionTimer != null)
                     {
                         _positionTimer.Stop();
@@ -590,7 +845,14 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             cds.dwData = (UIntPtr)command;
             cds.cbData = parameter.Length * Marshal.SystemDefaultCharSize;
             cds.lpData = Marshal.StringToCoTaskMemAuto(parameter);
-            NativeMethods.SendMessage(_mpcHandle, NativeMethods.WindowsMessageCopyData, _messageHandlerHandle, ref cds);
+            try
+            {
+                NativeMethods.SendMessage(_mpcHandle, NativeMethods.WindowsMessageCopyData, _messageHandlerHandle, ref cds);
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem(cds.lpData);
+            }
         }
 
     }

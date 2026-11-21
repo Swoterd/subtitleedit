@@ -1938,7 +1938,7 @@ namespace Nikse.SubtitleEdit.Forms.Assa
                 saveFileDialogStyle.FileName = "my_styles.ass";
             }
 
-            if (openFileDialogImport.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialogImport.ShowDialogWithLastFolder("AssaStyles.buttonImport", this) == DialogResult.OK)
             {
                 var s = new Subtitle();
                 var format = s.LoadSubtitle(openFileDialogImport.FileName, out _, null);
@@ -2234,7 +2234,7 @@ namespace Nikse.SubtitleEdit.Forms.Assa
                 saveFileDialogStyle.FileName = "my_styles.ass";
             }
 
-            if (openFileDialogImport.ShowDialog(this) != DialogResult.OK)
+            if (openFileDialogImport.ShowDialogWithLastFolder("AssaStyles.buttonStorageImport", this) != DialogResult.OK)
             {
                 return;
             }

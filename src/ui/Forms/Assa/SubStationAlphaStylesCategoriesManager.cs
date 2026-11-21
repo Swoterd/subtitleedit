@@ -324,7 +324,7 @@ namespace Nikse.SubtitleEdit.Forms.Assa
         {
             openFileDialogImport.Title = LanguageSettings.Current.SubStationAlphaStylesCategoriesManager.ImportCategoriesTitle;
             openFileDialogImport.Filter = LanguageSettings.Current.SubStationAlphaStylesCategoriesManager.Categories + TemplateFilterExtension;
-            if (openFileDialogImport.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialogImport.ShowDialogWithLastFolder("SubStationAlphaStylesCategoriesManager.ButtonImportCategories", this) == DialogResult.OK)
             {
                 try
                 {

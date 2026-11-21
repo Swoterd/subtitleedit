@@ -1252,11 +1252,35 @@ namespace Nikse.SubtitleEdit.Core.Common
             return isStart && isEnd;
         }
 
+        public static void RememberOriginalParagraphMatch(Paragraph paragraph, Paragraph match)
+        {
+            if (paragraph != null && match != null)
+            {
+                paragraph.MatchedParagraphId = match.Id;
+            }
+        }
+
         public static Paragraph GetOriginalParagraph(int index, Paragraph paragraph, List<Paragraph> originalParagraphs)
         {
             if (index < 0)
             {
                 return null;
+            }
+
+            if (paragraph.MatchedParagraphId != null)
+            {
+                if (index < originalParagraphs.Count && originalParagraphs[index].Id == paragraph.MatchedParagraphId)
+                {
+                    return originalParagraphs[index];
+                }
+
+                foreach (var original in originalParagraphs)
+                {
+                    if (original.Id == paragraph.MatchedParagraphId)
+                    {
+                        return original;
+                    }
+                }
             }
 
             var middle = paragraph.StartTime.TotalMilliseconds + paragraph.DurationTotalMilliseconds / 2.0;

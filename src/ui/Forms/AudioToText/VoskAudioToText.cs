@@ -629,7 +629,7 @@ namespace Nikse.SubtitleEdit.Forms.AudioToText
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(true);
                 openFileDialog1.Multiselect = true;
-                if (openFileDialog1.ShowDialog(this) != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("VoskAudioToText.buttonAddFile", this) != DialogResult.OK)
                 {
                     return;
                 }

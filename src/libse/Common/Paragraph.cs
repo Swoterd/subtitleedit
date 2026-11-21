@@ -39,6 +39,8 @@ namespace Nikse.SubtitleEdit.Core.Common
 
         public string Id { get; }
 
+        internal string MatchedParagraphId { get; set; }
+
         public string Language { get; set; }
 
         public string Style { get; set; }
@@ -83,6 +85,10 @@ namespace Nikse.SubtitleEdit.Core.Common
             Effect = paragraph.Effect;
             Layer = paragraph.Layer;
             Id = generateNewId ? GenerateId() : paragraph.Id;
+            if (!generateNewId)
+            {
+                MatchedParagraphId = paragraph.MatchedParagraphId;
+            }
             Language = paragraph.Language;
             Style = paragraph.Style;
             NewSection = paragraph.NewSection;

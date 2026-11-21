@@ -47,6 +47,18 @@ namespace Nikse.SubtitleEdit.Forms.Options
         private List<PluginShortcut> _pluginShortcuts;
         private readonly bool _loading;
         private string _defaultLanguages;
+        private CheckBox _checkBoxVideoPlayerPreviewTwoSubtitles;
+        private Button _buttonVideoPlayerPreviewTwoSubtitles;
+        private string _videoPlayerPreviewTranslationFontName;
+        private int _videoPlayerPreviewTranslationFontSize;
+        private bool _videoPlayerPreviewTranslationFontBold;
+        private string _videoPlayerPreviewOriginalFontName;
+        private int _videoPlayerPreviewOriginalFontSize;
+        private bool _videoPlayerPreviewOriginalFontBold;
+        private Color _videoPlayerPreviewTextColor;
+        private Color _videoPlayerPreviewTranslationTextColor;
+        private Color _videoPlayerPreviewOriginalTextColor;
+        private CheckBox _checkBoxMergeLinesSeparateWithLineBreak;
 
 
         private string[] spectrogramAppearances = { "OneColorGradient", "Classic", "Heat", "Cyan to orange" };
@@ -65,6 +77,44 @@ namespace Nikse.SubtitleEdit.Forms.Options
         }
 
         private static IEnumerable<string> GetSubtitleFormats() => SubtitleFormat.AllSubtitleFormats.Where(format => !format.IsVobSubIndexFile).Select(format => format.FriendlyName);
+
+        private void AddMergeDialogSeparatorControl()
+        {
+            _checkBoxMergeLinesSeparateWithLineBreak = new CheckBox
+            {
+                AutoSize = true,
+                Left = 9,
+                Top = 378,
+                Text = GetTranslationPreviewText("Merge two lines: separate lines with line break", "合并两行时用换行符隔开")
+            };
+
+            groupBoxGeneralRules.Height = Math.Max(groupBoxGeneralRules.Height, _checkBoxMergeLinesSeparateWithLineBreak.Bottom + 8);
+            groupBoxGeneralRules.Controls.Add(_checkBoxMergeLinesSeparateWithLineBreak);
+        }
+
+        private void AddVideoPlayerTranslationPreviewControls()
+        {
+            _checkBoxVideoPlayerPreviewTwoSubtitles = new CheckBox
+            {
+                AutoSize = true,
+                Left = 9,
+                Top = 119,
+                Text = GetTranslationPreviewText("Translation mode: preview both subtitles", "翻译模式同时预览双字幕")
+            };
+
+            _buttonVideoPlayerPreviewTwoSubtitles = new Button
+            {
+                Left = 9,
+                Top = 143,
+                Width = 210,
+                Height = 23,
+                Text = GetTranslationPreviewText("Translation preview settings...", "翻译预览设置...")
+            };
+            _buttonVideoPlayerPreviewTwoSubtitles.Click += ButtonVideoPlayerPreviewTwoSubtitles_Click;
+
+            groupBoxVideoPlayerDefault.Controls.Add(_checkBoxVideoPlayerPreviewTwoSubtitles);
+            groupBoxVideoPlayerDefault.Controls.Add(_buttonVideoPlayerPreviewTwoSubtitles);
+        }
 
         internal class ComboBoxLanguage
         {
@@ -132,6 +182,8 @@ namespace Nikse.SubtitleEdit.Forms.Options
             InitializeComponent();
             UiUtil.FixFonts(this);
             UiUtil.FixLargeFonts(this, buttonOK);
+            AddMergeDialogSeparatorControl();
+            AddVideoPlayerTranslationPreviewControls();
 
             listBoxSection.Items.Clear();
             listBoxSection.Items.AddRange(new object[] {
@@ -152,6 +204,11 @@ namespace Nikse.SubtitleEdit.Forms.Options
             _loading = false;
 
             _oldSettings = Core.Settings.Settings.CustomSerialize(Configuration.Settings);
+        }
+
+        private void checkBoxAllowEditOfOriginalSubtitle_CheckedChanged(object sender, EventArgs e)
+        {
+            checkBoxAlignOriginalSubtitleTimingOnOpen.Enabled = checkBoxAllowEditOfOriginalSubtitle.Checked;
         }
 
         public void Init()
@@ -317,6 +374,16 @@ namespace Nikse.SubtitleEdit.Forms.Options
             numericUpDownMpvOutline.Value = gs.MpvPreviewTextOutlineWidth;
             numericUpDownMpvShadowWidth.Value = gs.MpvPreviewTextShadowWidth;
             checkBoxVideoPlayerPreviewFontBold.Checked = gs.VideoPlayerPreviewFontBold;
+            _checkBoxVideoPlayerPreviewTwoSubtitles.Checked = gs.VideoPlayerPreviewTranslationModeTwoSubtitles;
+            _videoPlayerPreviewTranslationFontName = string.IsNullOrEmpty(gs.VideoPlayerPreviewTranslationFontName) ? gs.VideoPlayerPreviewFontName : gs.VideoPlayerPreviewTranslationFontName;
+            _videoPlayerPreviewTranslationFontSize = gs.VideoPlayerPreviewTranslationFontSize <= 0 ? gs.VideoPlayerPreviewFontSize : gs.VideoPlayerPreviewTranslationFontSize;
+            _videoPlayerPreviewTranslationFontBold = gs.VideoPlayerPreviewTranslationFontBold;
+            _videoPlayerPreviewOriginalFontName = string.IsNullOrEmpty(gs.VideoPlayerPreviewOriginalFontName) ? gs.VideoPlayerPreviewFontName : gs.VideoPlayerPreviewOriginalFontName;
+            _videoPlayerPreviewOriginalFontSize = gs.VideoPlayerPreviewOriginalFontSize <= 0 ? gs.VideoPlayerPreviewFontSize : gs.VideoPlayerPreviewOriginalFontSize;
+            _videoPlayerPreviewOriginalFontBold = gs.VideoPlayerPreviewOriginalFontBold;
+            _videoPlayerPreviewTextColor = gs.VideoPlayerPreviewTextColor;
+            _videoPlayerPreviewTranslationTextColor = gs.VideoPlayerPreviewTranslationTextColor.IsEmpty ? gs.VideoPlayerPreviewTextColor : gs.VideoPlayerPreviewTranslationTextColor;
+            _videoPlayerPreviewOriginalTextColor = gs.VideoPlayerPreviewOriginalTextColor;
             radioButtonMpvOpaqueBox.Checked = gs.MpvPreviewTextOpaqueBox;
             radioButtonMpvOutline.Checked = !gs.MpvPreviewTextOpaqueBox;
             if (gs.MpvPreviewTextOpaqueBox && gs.MpvPreviewTextOpaqueBoxStyle == "3")
@@ -664,6 +731,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             checkBoxAutoSave.Text = language.AutoSave;
             checkBoxCheckForUpdates.Left = checkBoxAutoSave.Left + checkBoxAutoSave.Width + 15;
             checkBoxAllowEditOfOriginalSubtitle.Text = language.AllowEditOfOriginalSubtitle;
+            checkBoxAlignOriginalSubtitleTimingOnOpen.Text = language.AlignOriginalSubtitleTimingOnOpen;
             checkBoxPromptDeleteLines.Text = language.PromptDeleteLines;
 
             comboBoxTimeCodeMode.Items.Clear();
@@ -786,6 +854,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             buttonWaveformCursorColor.Text = language.WaveformCursorColor;
             groupBoxSpectrogram.Text = language.Spectrogram;
             checkBoxGenerateSpectrogram.Text = language.GenerateSpectrogram;
+            checkBoxSpectrogramAegisubMode.Text = language.SpectrogramAegisubMode;
             labelSpectrogramAppearance.Text = language.SpectrogramAppearance;
             comboBoxSpectrogramAppearance.Items.Clear();
             comboBoxSpectrogramAppearance.Items.Add(language.SpectrogramOneColorGradient);
@@ -1061,6 +1130,8 @@ namespace Nikse.SubtitleEdit.Forms.Options
             }
 
             checkBoxAllowEditOfOriginalSubtitle.Checked = gs.AllowEditOfOriginalSubtitle;
+            checkBoxAlignOriginalSubtitleTimingOnOpen.Checked = gs.AlignOriginalSubtitleTimingOnOpen;
+            checkBoxAlignOriginalSubtitleTimingOnOpen.Enabled = checkBoxAllowEditOfOriginalSubtitle.Checked;
             checkBoxPromptDeleteLines.Checked = gs.PromptDeleteLines;
 
             var toolsSettings = Configuration.Settings.Tools;
@@ -1111,6 +1182,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             }
 
             SetDialogStyle(Configuration.Settings.General.DialogStyle);
+            _checkBoxMergeLinesSeparateWithLineBreak.Checked = gs.MergeLinesSeparateWithLineBreak;
             SetCpsLineLengthStyle(Configuration.Settings.General.CpsLineLengthStrategy);
 
             buttonEditCustomContinuationStyle.Visible = Configuration.Settings.General.ContinuationStyle == ContinuationStyle.Custom;
@@ -1208,6 +1280,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             panelWaveformTextColor.BackColor = Configuration.Settings.VideoControls.WaveformTextColor;
             panelWaveformCursorColor.BackColor = Configuration.Settings.VideoControls.WaveformCursorColor;
             checkBoxGenerateSpectrogram.Checked = Configuration.Settings.VideoControls.GenerateSpectrogram;
+            checkBoxSpectrogramAegisubMode.Checked = Configuration.Settings.VideoControls.SpectrogramAegisubMode;
             comboBoxSpectrogramAppearance.SelectedIndex = getSpectrogramAppearanceIndex(Configuration.Settings.VideoControls.SpectrogramAppearance);
             comboBoxWaveformTextSize.Text = Configuration.Settings.VideoControls.WaveformTextSize.ToString(CultureInfo.InvariantCulture);
             checkBoxWaveformTextBold.Checked = Configuration.Settings.VideoControls.WaveformTextBold;
@@ -2266,6 +2339,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             gs.SpellChecker = comboBoxSpellChecker.SelectedIndex == 1 ? "word" : "hunspell";
 
             gs.AllowEditOfOriginalSubtitle = checkBoxAllowEditOfOriginalSubtitle.Checked;
+            gs.AlignOriginalSubtitleTimingOnOpen = checkBoxAlignOriginalSubtitleTimingOnOpen.Checked;
             gs.PromptDeleteLines = checkBoxPromptDeleteLines.Checked;
 
             if (radioButtonVideoPlayerMPV.Checked)
@@ -2295,6 +2369,16 @@ namespace Nikse.SubtitleEdit.Forms.Options
             gs.VideoPlayerPreviewFontSize = int.Parse(comboBoxlVideoPlayerPreviewFontSize.Items[0].ToString()) + comboBoxlVideoPlayerPreviewFontSize.SelectedIndex;
             gs.MpvPreviewTextMarginVertical = (int)numericUpDownMarginVertical.Value;
             gs.VideoPlayerPreviewFontBold = checkBoxVideoPlayerPreviewFontBold.Checked;
+            gs.VideoPlayerPreviewTranslationModeTwoSubtitles = _checkBoxVideoPlayerPreviewTwoSubtitles.Checked;
+            gs.VideoPlayerPreviewTranslationFontName = _videoPlayerPreviewTranslationFontName;
+            gs.VideoPlayerPreviewTranslationFontSize = _videoPlayerPreviewTranslationFontSize;
+            gs.VideoPlayerPreviewTranslationFontBold = _videoPlayerPreviewTranslationFontBold;
+            gs.VideoPlayerPreviewOriginalFontName = _videoPlayerPreviewOriginalFontName;
+            gs.VideoPlayerPreviewOriginalFontSize = _videoPlayerPreviewOriginalFontSize;
+            gs.VideoPlayerPreviewOriginalFontBold = _videoPlayerPreviewOriginalFontBold;
+            gs.VideoPlayerPreviewTextColor = _videoPlayerPreviewTextColor;
+            gs.VideoPlayerPreviewTranslationTextColor = _videoPlayerPreviewTranslationTextColor;
+            gs.VideoPlayerPreviewOriginalTextColor = _videoPlayerPreviewOriginalTextColor;
             gs.MpvPreviewTextPrimaryColor = panelMpvPrimaryColor.BackColor;
             gs.MpvPreviewTextOutlineColor = panelMpvOutlineColor.BackColor;
             gs.MpvPreviewTextBackgroundColor = panelMpvBackColor.BackColor;
@@ -2396,6 +2480,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             }
 
             gs.DialogStyle = DialogSplitMerge.GetDialogStyleFromIndex(comboBoxDialogStyle.SelectedIndex);
+            gs.MergeLinesSeparateWithLineBreak = _checkBoxMergeLinesSeparateWithLineBreak.Checked;
             gs.ContinuationStyle = ContinuationUtilities.GetContinuationStyleFromIndex(comboBoxContinuationStyle.SelectedIndex);
             gs.CpsLineLengthStrategy = (comboBoxCpsLineLenCalc.SelectedItem as CpsLineLength)?.Code;
 
@@ -2478,6 +2563,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             Configuration.Settings.VideoControls.WaveformTextColor = panelWaveformTextColor.BackColor;
             Configuration.Settings.VideoControls.WaveformCursorColor = panelWaveformCursorColor.BackColor;
             Configuration.Settings.VideoControls.GenerateSpectrogram = checkBoxGenerateSpectrogram.Checked;
+            Configuration.Settings.VideoControls.SpectrogramAegisubMode = checkBoxSpectrogramAegisubMode.Checked;
             Configuration.Settings.VideoControls.SpectrogramAppearance = spectrogramAppearances[comboBoxSpectrogramAppearance.SelectedIndex];
             Configuration.Settings.VideoControls.SpectrogramWaveformOpacity = trackBarSpectrogramOpacity.Value;
             Configuration.Settings.VideoControls.WaveformTextSize = int.Parse(comboBoxWaveformTextSize.Text);
@@ -2860,6 +2946,211 @@ namespace Nikse.SubtitleEdit.Forms.Options
             }
         }
 
+        private void ButtonVideoPlayerPreviewTwoSubtitles_Click(object sender, EventArgs e)
+        {
+            using (var form = new Form())
+            using (var comboBoxMainFont = new ComboBox())
+            using (var comboBoxMainSize = new ComboBox())
+            using (var checkBoxMainBold = new CheckBox())
+            using (var panelMainColor = new Panel())
+            using (var buttonMainColor = new Button())
+            using (var comboBoxOriginalFont = new ComboBox())
+            using (var comboBoxOriginalSize = new ComboBox())
+            using (var checkBoxOriginalBold = new CheckBox())
+            using (var panelOriginalColor = new Panel())
+            using (var buttonOriginalColor = new Button())
+            using (var buttonOk = new Button())
+            using (var buttonCancel = new Button())
+            {
+                form.Text = GetTranslationPreviewText("Translation preview settings", "翻译模式预览设置");
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.MinimizeBox = false;
+                form.MaximizeBox = false;
+                form.ClientSize = new Size(660, 185);
+
+                var fontNames = FontHelper.GetAllSupportedFontFamilies().Select(p => p.Name).ToArray();
+                comboBoxMainFont.DropDownStyle = ComboBoxStyle.DropDownList;
+                comboBoxOriginalFont.DropDownStyle = ComboBoxStyle.DropDownList;
+                comboBoxMainFont.Items.AddRange(fontNames);
+                comboBoxOriginalFont.Items.AddRange(fontNames);
+                SelectComboText(comboBoxMainFont, _videoPlayerPreviewTranslationFontName);
+                SelectComboText(comboBoxOriginalFont, _videoPlayerPreviewOriginalFontName);
+
+                comboBoxMainSize.DropDownStyle = ComboBoxStyle.DropDownList;
+                comboBoxOriginalSize.DropDownStyle = ComboBoxStyle.DropDownList;
+                for (var i = 8; i <= 120; i++)
+                {
+                    comboBoxMainSize.Items.Add(i.ToString(CultureInfo.InvariantCulture));
+                    comboBoxOriginalSize.Items.Add(i.ToString(CultureInfo.InvariantCulture));
+                }
+
+                SelectComboText(comboBoxMainSize, _videoPlayerPreviewTranslationFontSize.ToString(CultureInfo.InvariantCulture));
+                SelectComboText(comboBoxOriginalSize, _videoPlayerPreviewOriginalFontSize.ToString(CultureInfo.InvariantCulture));
+
+                checkBoxMainBold.Text = LanguageSettings.Current.Settings.SubtitleBold;
+                checkBoxMainBold.Checked = _videoPlayerPreviewTranslationFontBold;
+                checkBoxOriginalBold.Text = LanguageSettings.Current.Settings.SubtitleBold;
+                checkBoxOriginalBold.Checked = _videoPlayerPreviewOriginalFontBold;
+
+                panelMainColor.BorderStyle = BorderStyle.FixedSingle;
+                panelMainColor.BackColor = _videoPlayerPreviewTranslationTextColor;
+                panelMainColor.Click += (s, ea) => PickPreviewColor(panelMainColor);
+                buttonMainColor.Text = LanguageSettings.Current.Settings.ChooseColor;
+                buttonMainColor.Click += (s, ea) => PickPreviewColor(panelMainColor);
+                panelOriginalColor.BorderStyle = BorderStyle.FixedSingle;
+                panelOriginalColor.BackColor = _videoPlayerPreviewOriginalTextColor;
+                panelOriginalColor.Click += (s, ea) => PickPreviewColor(panelOriginalColor);
+                buttonOriginalColor.Text = LanguageSettings.Current.Settings.ChooseColor;
+                buttonOriginalColor.Click += (s, ea) => PickPreviewColor(panelOriginalColor);
+
+                var table = new TableLayoutPanel
+                {
+                    Left = 14,
+                    Top = 14,
+                    Width = 630,
+                    Height = 118,
+                    ColumnCount = 6,
+                    RowCount = 3,
+                };
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 95));
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 245));
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 85));
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30));
+                table.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+                table.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+                table.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+                form.Controls.Add(table);
+
+                AddPreviewSettingsHeader(table);
+                AddPreviewSettingsRow(
+                    table,
+                    GetTranslationPreviewText("Main subtitle", "主字幕"),
+                    1,
+                    comboBoxMainFont,
+                    comboBoxMainSize,
+                    checkBoxMainBold,
+                    buttonMainColor,
+                    panelMainColor);
+                AddPreviewSettingsRow(
+                    table,
+                    GetTranslationPreviewText("Original subtitle", "原始字幕"),
+                    2,
+                    comboBoxOriginalFont,
+                    comboBoxOriginalSize,
+                    checkBoxOriginalBold,
+                    buttonOriginalColor,
+                    panelOriginalColor);
+
+                buttonOk.Text = LanguageSettings.Current.General.Ok;
+                buttonOk.DialogResult = DialogResult.OK;
+                buttonOk.Location = new Point(475, 145);
+                buttonCancel.Text = LanguageSettings.Current.General.Cancel;
+                buttonCancel.DialogResult = DialogResult.Cancel;
+                buttonCancel.Location = new Point(565, 145);
+                form.Controls.Add(buttonOk);
+                form.Controls.Add(buttonCancel);
+                form.AcceptButton = buttonOk;
+                form.CancelButton = buttonCancel;
+
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    _videoPlayerPreviewTranslationFontName = comboBoxMainFont.Text;
+                    _videoPlayerPreviewTranslationFontSize = int.Parse(comboBoxMainSize.Text, CultureInfo.InvariantCulture);
+                    _videoPlayerPreviewTranslationFontBold = checkBoxMainBold.Checked;
+                    _videoPlayerPreviewTranslationTextColor = panelMainColor.BackColor;
+                    _videoPlayerPreviewOriginalFontName = comboBoxOriginalFont.Text;
+                    _videoPlayerPreviewOriginalFontSize = int.Parse(comboBoxOriginalSize.Text, CultureInfo.InvariantCulture);
+                    _videoPlayerPreviewOriginalFontBold = checkBoxOriginalBold.Checked;
+                    _videoPlayerPreviewOriginalTextColor = panelOriginalColor.BackColor;
+                }
+            }
+        }
+
+        private static void AddPreviewSettingsHeader(TableLayoutPanel table)
+        {
+            table.Controls.Add(new Label { Text = GetTranslationPreviewText("Font", "字体"), AutoSize = true, Anchor = AnchorStyles.Left }, 1, 0);
+            table.Controls.Add(new Label { Text = GetTranslationPreviewText("Size", "字号"), AutoSize = true, Anchor = AnchorStyles.Left }, 2, 0);
+            table.Controls.Add(new Label { Text = GetTranslationPreviewText("Color", "颜色"), AutoSize = true, Anchor = AnchorStyles.Left }, 4, 0);
+        }
+
+        private static void AddPreviewSettingsRow(TableLayoutPanel table, string title, int row, ComboBox font, ComboBox size, CheckBox bold, Button colorButton, Panel color)
+        {
+            var titleLabel = new Label { Text = title, AutoSize = true, Anchor = AnchorStyles.Left | AnchorStyles.Top, Margin = new Padding(0, 8, 3, 0) };
+            font.Dock = DockStyle.Fill;
+            font.Margin = new Padding(3, 3, 3, 9);
+            size.Dock = DockStyle.Fill;
+            size.Margin = new Padding(3, 3, 3, 9);
+            bold.AutoSize = false;
+            bold.Anchor = AnchorStyles.Left | AnchorStyles.Top;
+            bold.Margin = new Padding(8, 6, 3, 0);
+            bold.Width = 74;
+            bold.Height = 26;
+            colorButton.Dock = DockStyle.Fill;
+            colorButton.Margin = new Padding(3, 7, 3, 7);
+            color.Width = 24;
+            color.Height = 24;
+            color.Anchor = AnchorStyles.Left;
+
+            table.Controls.Add(titleLabel, 0, row);
+            table.Controls.Add(font, 1, row);
+            table.Controls.Add(size, 2, row);
+            table.Controls.Add(bold, 3, row);
+            table.Controls.Add(colorButton, 4, row);
+            table.Controls.Add(color, 5, row);
+        }
+
+        private static string GetTranslationPreviewText(string english, string chinese)
+        {
+            return Configuration.Settings.General.Language != null &&
+                   Configuration.Settings.General.Language.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
+                ? chinese
+                : english;
+        }
+
+        private static void SelectComboText(ComboBox comboBox, string text)
+        {
+            var index = comboBox.FindStringExact(text ?? string.Empty);
+            if (index >= 0)
+            {
+                comboBox.SelectedIndex = index;
+            }
+            else if (comboBox.Items.Count > 0)
+            {
+                comboBox.SelectedIndex = 0;
+            }
+        }
+
+        private static void SelectNikseComboText(NikseComboBox comboBox, string text)
+        {
+            for (var i = 0; i < comboBox.Items.Count; i++)
+            {
+                if (string.Equals(comboBox.Items[i]?.ToString(), text, StringComparison.Ordinal))
+                {
+                    comboBox.SelectedIndex = i;
+                    return;
+                }
+            }
+
+            if (comboBox.Items.Count > 0)
+            {
+                comboBox.SelectedIndex = 0;
+            }
+        }
+
+        private static void PickPreviewColor(Panel panel)
+        {
+            using (var colorChooser = new ColorChooser { Color = panel.BackColor, ShowAlpha = false })
+            {
+                if (colorChooser.ShowDialog() == DialogResult.OK)
+                {
+                    panel.BackColor = colorChooser.Color;
+                }
+            }
+        }
+
         private void panelSubtitleBackgroundColor_Click(object sender, EventArgs e)
         {
             using (var colorChooser = new ColorChooser { Color = panelSubtitleBackgroundColor.BackColor, ShowAlpha = false })
@@ -3058,7 +3349,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             {
                 openFileDialogFFmpeg.Filter = "FFmpeg (ffmpeg.exe)|ffmpeg.exe";
             }
-            if (openFileDialogFFmpeg.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialogFFmpeg.ShowDialogWithLastFolder("Settings.buttonBrowseToFFmpeg", this) == DialogResult.OK)
             {
                 textBoxFFmpegPath.Text = openFileDialogFFmpeg.FileName;
             }
@@ -3077,7 +3368,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             {
                 openFileDialogFFmpeg.Filter = $"{LanguageSettings.Current.Settings.VlcMediaPlayer} (vlc.exe)|vlc.exe|" + LanguageSettings.Current.General.AllFiles + "|*.*";
             }
-            if (openFileDialogFFmpeg.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialogFFmpeg.ShowDialogWithLastFolder("Settings.buttonVlcPathBrowse", this) == DialogResult.OK)
             {
                 EnableVlc(openFileDialogFFmpeg.FileName);
             }
@@ -3132,7 +3423,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             openFileDialogFFmpeg.FileName = string.Empty;
             openFileDialogFFmpeg.Title = LanguageSettings.Current.Settings.WaveformBrowseToFFmpeg;
             openFileDialogFFmpeg.Filter = $"{LanguageSettings.Current.General.AudioFiles} (*.wav)|*.wav";
-            if (openFileDialogFFmpeg.ShowDialog(this) == DialogResult.OK)
+            if (openFileDialogFFmpeg.ShowDialogWithLastFolder("Settings.buttonNetworkSessionNewMessageSound", this) == DialogResult.OK)
             {
                 textBoxNetworkSessionNewMessageSound.Text = openFileDialogFFmpeg.FileName;
             }
@@ -3459,7 +3750,7 @@ namespace Nikse.SubtitleEdit.Forms.Options
             openFileDialogFFmpeg.Title = null;
             openFileDialogFFmpeg.Filter = "Xml files|*.xml";
             openFileDialogFFmpeg.FileName = "SE_Shortcuts";
-            if (openFileDialogFFmpeg.ShowDialog(this) != DialogResult.OK)
+            if (openFileDialogFFmpeg.ShowDialogWithLastFolder("Settings.importShortcutsToolStripMenuItem", this) != DialogResult.OK)
             {
                 return;
             }

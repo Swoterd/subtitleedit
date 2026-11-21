@@ -754,7 +754,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Filter = UiUtil.GetVideoFileFilter(false);
                 openFileDialog1.FileName = string.Empty;
-                if (openFileDialog1.ShowDialog() != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateVideoWithSoftSubs.buttonOpenVideoFile") != DialogResult.OK)
                 {
                     return;
                 }
@@ -775,7 +775,7 @@ namespace Nikse.SubtitleEdit.Forms
                 openFileDialog1.Filter = GetOpenSubtitleDialogFilter();
                 openFileDialog1.FileName = string.Empty;
                 openFileDialog1.Multiselect = true;
-                if (openFileDialog1.ShowDialog() != DialogResult.OK)
+                if (openFileDialog1.ShowDialogWithLastFolder("GenerateVideoWithSoftSubs.buttonAddSubtitles") != DialogResult.OK)
                 {
                     return;
                 }

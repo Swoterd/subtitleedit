@@ -1,4 +1,9 @@
 *.csproj.DotSettings
+
+# Local runtime state
+/Settings.xml
+/History.xml
+/video_resize_log.txt
 *.psess
 *.sdf
 *.suo

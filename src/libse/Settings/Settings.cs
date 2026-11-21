@@ -21,6 +21,7 @@ namespace Nikse.SubtitleEdit.Core.Settings
         public CompareSettings Compare { get; set; }
         public VerifyCompletenessSettings VerifyCompleteness { get; set; }
         public RecentFilesSettings RecentFiles { get; set; }
+        public Dictionary<string, string> OpenFileDialogFolders { get; private set; }
         public GeneralSettings General { get; set; }
         public ToolsSettings Tools { get; set; }
         public FcpExportSettings FcpExportSettings { get; set; }
@@ -40,6 +41,7 @@ namespace Nikse.SubtitleEdit.Core.Settings
         public void Reset()
         {
             RecentFiles = new RecentFilesSettings();
+            OpenFileDialogFolders = new Dictionary<string, string>(StringComparer.Ordinal);
             General = new GeneralSettings();
             Tools = new ToolsSettings();
             FcpExportSettings = new FcpExportSettings();
@@ -160,7 +162,57 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 }
             }
 
+            NormalizePreviewSettings(settings);
             return settings;
+        }
+
+        private static void NormalizePreviewSettings(Settings settings)
+        {
+            var general = settings.General;
+            if (string.IsNullOrWhiteSpace(general.VideoPlayerPreviewFontName))
+            {
+                general.VideoPlayerPreviewFontName = string.IsNullOrWhiteSpace(general.SubtitleFontName) ? "Tahoma" : general.SubtitleFontName;
+            }
+
+            if (general.VideoPlayerPreviewFontSize <= 0)
+            {
+                general.VideoPlayerPreviewFontSize = 12;
+            }
+
+            if (string.IsNullOrWhiteSpace(general.VideoPlayerPreviewOriginalFontName))
+            {
+                general.VideoPlayerPreviewOriginalFontName = general.VideoPlayerPreviewFontName;
+            }
+
+            if (general.VideoPlayerPreviewOriginalFontSize <= 0)
+            {
+                general.VideoPlayerPreviewOriginalFontSize = general.VideoPlayerPreviewFontSize;
+            }
+
+            if (general.VideoPlayerPreviewTextColor.IsEmpty)
+            {
+                general.VideoPlayerPreviewTextColor = Color.White;
+            }
+
+            if (string.IsNullOrWhiteSpace(general.VideoPlayerPreviewTranslationFontName))
+            {
+                general.VideoPlayerPreviewTranslationFontName = general.VideoPlayerPreviewFontName;
+            }
+
+            if (general.VideoPlayerPreviewTranslationFontSize <= 0)
+            {
+                general.VideoPlayerPreviewTranslationFontSize = general.VideoPlayerPreviewFontSize;
+            }
+
+            if (general.VideoPlayerPreviewTranslationTextColor.IsEmpty)
+            {
+                general.VideoPlayerPreviewTranslationTextColor = general.VideoPlayerPreviewTextColor;
+            }
+
+            if (general.VideoPlayerPreviewOriginalTextColor.IsEmpty)
+            {
+                general.VideoPlayerPreviewOriginalTextColor = general.VideoPlayerPreviewTextColor;
+            }
         }
 
         //private static Settings Deserialize(string fileName)
@@ -257,6 +309,15 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 if (xnode != null)
                 {
                     settings.VerifyCompleteness.ListSort = (VerifyCompletenessSettings.ListSortEnum)Enum.Parse(typeof(VerifyCompletenessSettings.ListSortEnum), xnode.InnerText);
+                }
+            }
+
+            foreach (XmlNode folderNode in doc.DocumentElement.SelectNodes("OpenFileDialogFolders/Folder"))
+            {
+                var operation = folderNode.Attributes?["Operation"]?.Value;
+                if (!string.IsNullOrEmpty(operation) && !string.IsNullOrWhiteSpace(folderNode.InnerText))
+                {
+                    settings.OpenFileDialogFolders[operation] = folderNode.InnerText;
                 }
             }
 
@@ -831,6 +892,12 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 settings.General.DialogStyle = (DialogType)Enum.Parse(typeof(DialogType), subNode.InnerText);
             }
 
+            subNode = node.SelectSingleNode("MergeLinesSeparateWithLineBreak") ?? node.SelectSingleNode("MergeDialogSeparateWithLineBreak");
+            if (subNode != null)
+            {
+                settings.General.MergeLinesSeparateWithLineBreak = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
             subNode = node.SelectSingleNode("ContinuationStyle");
             if (subNode != null)
             {
@@ -997,6 +1064,66 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 settings.General.VideoPlayerPreviewFontBold = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
             }
 
+            subNode = node.SelectSingleNode("VideoPlayerPreviewTranslationModeTwoSubtitles");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewTranslationModeTwoSubtitles = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewTranslationFontName");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewTranslationFontName = subNode.InnerText;
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewTranslationFontSize");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewTranslationFontSize = Convert.ToInt32(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewTranslationFontBold");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewTranslationFontBold = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewOriginalFontName");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewOriginalFontName = subNode.InnerText;
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewOriginalFontSize");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewOriginalFontSize = Convert.ToInt32(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewOriginalFontBold");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewOriginalFontBold = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewTextColor");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewTextColor = Color.FromArgb(Convert.ToInt32(subNode.InnerText, CultureInfo.InvariantCulture));
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewTranslationTextColor");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewTranslationTextColor = Color.FromArgb(Convert.ToInt32(subNode.InnerText, CultureInfo.InvariantCulture));
+            }
+
+            subNode = node.SelectSingleNode("VideoPlayerPreviewOriginalTextColor");
+            if (subNode != null)
+            {
+                settings.General.VideoPlayerPreviewOriginalTextColor = Color.FromArgb(Convert.ToInt32(subNode.InnerText, CultureInfo.InvariantCulture));
+            }
+
             subNode = node.SelectSingleNode("VideoPlayerShowStopButton");
             if (subNode != null)
             {
@@ -1109,6 +1236,12 @@ namespace Nikse.SubtitleEdit.Core.Settings
             if (subNode != null)
             {
                 settings.General.AllowEditOfOriginalSubtitle = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
+            subNode = node.SelectSingleNode("AlignOriginalSubtitleTimingOnOpen");
+            if (subNode != null)
+            {
+                settings.General.AlignOriginalSubtitleTimingOnOpen = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
             }
 
             subNode = node.SelectSingleNode("PromptDeleteLines");
@@ -5489,6 +5622,17 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 settings.VideoControls.WaveformAllowOverlap = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
             }
 
+            subNode = node.SelectSingleNode("WaveformAutoLinkAdjacentBoundaries");
+            if (subNode != null)
+            {
+                settings.VideoControls.WaveformAutoLinkAdjacentBoundaries = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
+            subNode = node.SelectSingleNode("WaveformAutoLinkAdjacentBoundariesThresholdMs");
+            if (subNode != null)
+            {
+                settings.VideoControls.WaveformAutoLinkAdjacentBoundariesThresholdMs = Convert.ToInt32(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
             subNode = node.SelectSingleNode("WaveformFocusOnMouseEnter");
             if (subNode != null)
             {
@@ -5511,6 +5655,12 @@ namespace Nikse.SubtitleEdit.Core.Settings
             if (subNode != null)
             {
                 settings.VideoControls.WaveformSnapToShotChanges = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
+            }
+
+            subNode = node.SelectSingleNode("SpectrogramAegisubMode");
+            if (subNode != null)
+            {
+                settings.VideoControls.SpectrogramAegisubMode = Convert.ToBoolean(subNode.InnerText, CultureInfo.InvariantCulture);
             }
 
             subNode = node.SelectSingleNode("WaveformShotChangeStartTimeBeforeMs");
@@ -8853,6 +9003,17 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 xmlWriter.WriteElementString("ListSort", settings.VerifyCompleteness.ListSort.ToString());
                 xmlWriter.WriteEndElement();
 
+                xmlWriter.WriteStartElement("OpenFileDialogFolders");
+                foreach (var entry in settings.OpenFileDialogFolders)
+                {
+                    xmlWriter.WriteStartElement("Folder");
+                    xmlWriter.WriteAttributeString("Operation", entry.Key);
+                    xmlWriter.WriteString(entry.Value);
+                    xmlWriter.WriteEndElement();
+                }
+
+                xmlWriter.WriteEndElement();
+
                 xmlWriter.WriteStartElement("RecentFiles", string.Empty);
                 xmlWriter.WriteStartElement("FileNames", string.Empty);
                 foreach (var item in settings.RecentFiles.Files)
@@ -8991,6 +9152,7 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 xmlWriter.WriteElementString("CpsLineLengthStrategy", settings.General.CpsLineLengthStrategy);
                 xmlWriter.WriteElementString("SubtitleMaximumWordsPerMinute", settings.General.SubtitleMaximumWordsPerMinute.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("DialogStyle", settings.General.DialogStyle.ToString());
+                xmlWriter.WriteElementString("MergeLinesSeparateWithLineBreak", settings.General.MergeLinesSeparateWithLineBreak.ToString(CultureInfo.InvariantCulture));
 
                 xmlWriter.WriteElementString("ContinuationStyle", settings.General.ContinuationStyle.ToString());
 
@@ -9020,6 +9182,16 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 xmlWriter.WriteElementString("VideoPlayerPreviewFontSize", settings.General.VideoPlayerPreviewFontSize.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("VideoPlayerPreviewBoxHeight", settings.General.VideoPlayerPreviewBoxHeight.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("VideoPlayerPreviewFontBold", settings.General.VideoPlayerPreviewFontBold.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("VideoPlayerPreviewTranslationModeTwoSubtitles", settings.General.VideoPlayerPreviewTranslationModeTwoSubtitles.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("VideoPlayerPreviewTranslationFontName", settings.General.VideoPlayerPreviewTranslationFontName);
+                xmlWriter.WriteElementString("VideoPlayerPreviewTranslationFontSize", settings.General.VideoPlayerPreviewTranslationFontSize.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("VideoPlayerPreviewTranslationFontBold", settings.General.VideoPlayerPreviewTranslationFontBold.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("VideoPlayerPreviewOriginalFontName", settings.General.VideoPlayerPreviewOriginalFontName);
+                xmlWriter.WriteElementString("VideoPlayerPreviewOriginalFontSize", settings.General.VideoPlayerPreviewOriginalFontSize.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("VideoPlayerPreviewOriginalFontBold", settings.General.VideoPlayerPreviewOriginalFontBold.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("VideoPlayerPreviewTextColor", settings.General.VideoPlayerPreviewTextColor.ToArgb().ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("VideoPlayerPreviewTranslationTextColor", settings.General.VideoPlayerPreviewTranslationTextColor.ToArgb().ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("VideoPlayerPreviewOriginalTextColor", settings.General.VideoPlayerPreviewOriginalTextColor.ToArgb().ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("VideoPlayerShowStopButton", settings.General.VideoPlayerShowStopButton.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("VideoPlayerShowMuteButton", settings.General.VideoPlayerShowMuteButton.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("VideoPlayerShowFullscreenButton", settings.General.VideoPlayerShowFullscreenButton.ToString(CultureInfo.InvariantCulture));
@@ -9039,6 +9211,7 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 xmlWriter.WriteElementString("AutoBackupDeleteAfterMonths", settings.General.AutoBackupDeleteAfterMonths.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("SpellChecker", settings.General.SpellChecker);
                 xmlWriter.WriteElementString("AllowEditOfOriginalSubtitle", settings.General.AllowEditOfOriginalSubtitle.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("AlignOriginalSubtitleTimingOnOpen", settings.General.AlignOriginalSubtitleTimingOnOpen.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("PromptDeleteLines", settings.General.PromptDeleteLines.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("Undocked", settings.General.Undocked.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("UndockedVideoPosition", settings.General.UndockedVideoPosition);
@@ -9837,11 +10010,14 @@ namespace Nikse.SubtitleEdit.Core.Settings
                 xmlWriter.WriteElementString("WaveformDrawCps", settings.VideoControls.WaveformDrawCps.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformDrawWpm", settings.VideoControls.WaveformDrawWpm.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformAllowOverlap", settings.VideoControls.WaveformAllowOverlap.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("WaveformAutoLinkAdjacentBoundaries", settings.VideoControls.WaveformAutoLinkAdjacentBoundaries.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("WaveformAutoLinkAdjacentBoundariesThresholdMs", settings.VideoControls.WaveformAutoLinkAdjacentBoundariesThresholdMs.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformFocusOnMouseEnter", settings.VideoControls.WaveformFocusOnMouseEnter.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformListViewFocusOnMouseEnter", settings.VideoControls.WaveformListViewFocusOnMouseEnter.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformSetVideoPositionOnMoveStartEnd", settings.VideoControls.WaveformSetVideoPositionOnMoveStartEnd.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformSingleClickSelect", settings.VideoControls.WaveformSingleClickSelect.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformSnapToShotChanges", settings.VideoControls.WaveformSnapToShotChanges.ToString(CultureInfo.InvariantCulture));
+                xmlWriter.WriteElementString("SpectrogramAegisubMode", settings.VideoControls.SpectrogramAegisubMode.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformShotChangeStartTimeBeforeMs", settings.VideoControls.WaveformShotChangeStartTimeBeforeMs.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformShotChangeStartTimeAfterMs", settings.VideoControls.WaveformShotChangeStartTimeAfterMs.ToString(CultureInfo.InvariantCulture));
                 xmlWriter.WriteElementString("WaveformShotChangeEndTimeBeforeMs", settings.VideoControls.WaveformShotChangeEndTimeBeforeMs.ToString(CultureInfo.InvariantCulture));
