@@ -2489,6 +2489,8 @@ namespace Nikse.SubtitleEdit.Forms
             mergeDialogWithNextToolStripMenuItem.Text = languageWaveform.MergeWithNextAsDialog ?? "Merge with next as dialog";
             toolStripMenuItemTextBoxMergeDialogWithPrevious.Text = mergeDialogWithPreviousToolStripMenuItem.Text;
             toolStripMenuItemTextBoxMergeDialogWithNext.Text = mergeDialogWithNextToolStripMenuItem.Text;
+            toolStripMenuItemListMergeDialogWithPrevious.Text = mergeDialogWithPreviousToolStripMenuItem.Text;
+            toolStripMenuItemListMergeDialogWithNext.Text = mergeDialogWithNextToolStripMenuItem.Text;
             extendToPreviousToolStripMenuItem.Text = languageWaveform.ExtendToPrevious;
             extendToNextToolStripMenuItem.Text = languageWaveform.ExtendToNext;
             toolStripMenuItemWaveformPlaySelection.Text = languageWaveform.PlaySelection;
@@ -9409,6 +9411,10 @@ namespace Nikse.SubtitleEdit.Forms
 
         private void ContextMenuStripListViewOpening(object sender, CancelEventArgs e)
         {
+            var mergeIndex = FirstSelectedIndex;
+            var canMergeAdjacent = SubtitleListview1.SelectedItems.Count == 1 && mergeIndex >= 0 && mergeIndex < _subtitle.Paragraphs.Count;
+            toolStripMenuItemListMergeDialogWithPrevious.Enabled = canMergeAdjacent && mergeIndex > 0;
+            toolStripMenuItemListMergeDialogWithNext.Enabled = canMergeAdjacent && mergeIndex + 1 < _subtitle.Paragraphs.Count;
             var format = GetCurrentSubtitleFormat();
             var formatType = format.GetType();
             var coordinates = SubtitleListview1.PointToClient(Cursor.Position);
@@ -32152,6 +32158,29 @@ namespace Nikse.SubtitleEdit.Forms
             {
                 toolStripMenuItemSplitViaWaveform.Visible = false;
             }
+        }
+
+        private void ListViewMergeDialogWithPreviousClick(object sender, EventArgs e)
+        {
+            MergeListViewParagraphAsDialog(-1);
+        }
+
+        private void ListViewMergeDialogWithNextClick(object sender, EventArgs e)
+        {
+            MergeListViewParagraphAsDialog(1);
+        }
+
+        private void MergeListViewParagraphAsDialog(int direction)
+        {
+            var index = FirstSelectedIndex;
+            var otherIndex = index + direction;
+            if (!InListView || SubtitleListview1.SelectedItems.Count != 1 || index < 0 || index >= _subtitle.Paragraphs.Count ||
+                otherIndex < 0 || otherIndex >= _subtitle.Paragraphs.Count)
+            {
+                return;
+            }
+
+            MergeWithLineAfter(true, firstIndex: Math.Min(index, otherIndex));
         }
 
         private void TextBoxMergeDialogWithPreviousClick(object sender, EventArgs e)

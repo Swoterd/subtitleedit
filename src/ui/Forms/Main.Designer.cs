@@ -321,6 +321,8 @@ namespace Nikse.SubtitleEdit.Forms
             this.splitLineToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItemMergeLines = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItemMergeDialog = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItemListMergeDialogWithPrevious = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItemListMergeDialogWithNext = new System.Windows.Forms.ToolStripMenuItem();
             this.mergeBeforeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mergeAfterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator4Extend = new System.Windows.Forms.ToolStripSeparator();
@@ -2749,6 +2751,8 @@ namespace Nikse.SubtitleEdit.Forms
             this.toolStripMenuItemMergeDialog,
             this.mergeBeforeToolStripMenuItem,
             this.mergeAfterToolStripMenuItem,
+            this.toolStripMenuItemListMergeDialogWithPrevious,
+            this.toolStripMenuItemListMergeDialogWithNext,
             this.toolStripSeparator4Extend,
             this.extendBeforeToolStripMenuItem,
             this.extendAfterToolStripMenuItem,
@@ -3056,6 +3060,20 @@ namespace Nikse.SubtitleEdit.Forms
             this.mergeAfterToolStripMenuItem.Size = new System.Drawing.Size(284, 22);
             this.mergeAfterToolStripMenuItem.Text = "Merge with line after";
             this.mergeAfterToolStripMenuItem.Click += new System.EventHandler(this.MergeAfterToolStripMenuItemClick);
+            //
+            // toolStripMenuItemListMergeDialogWithPrevious
+            //
+            this.toolStripMenuItemListMergeDialogWithPrevious.Name = "toolStripMenuItemListMergeDialogWithPrevious";
+            this.toolStripMenuItemListMergeDialogWithPrevious.Size = new System.Drawing.Size(284, 22);
+            this.toolStripMenuItemListMergeDialogWithPrevious.Text = "Merge with previous as dialog";
+            this.toolStripMenuItemListMergeDialogWithPrevious.Click += new System.EventHandler(this.ListViewMergeDialogWithPreviousClick);
+            //
+            // toolStripMenuItemListMergeDialogWithNext
+            //
+            this.toolStripMenuItemListMergeDialogWithNext.Name = "toolStripMenuItemListMergeDialogWithNext";
+            this.toolStripMenuItemListMergeDialogWithNext.Size = new System.Drawing.Size(284, 22);
+            this.toolStripMenuItemListMergeDialogWithNext.Text = "Merge with next as dialog";
+            this.toolStripMenuItemListMergeDialogWithNext.Click += new System.EventHandler(this.ListViewMergeDialogWithNextClick);
             // 
             // toolStripSeparator4Extend
             // 
@@ -6491,6 +6509,8 @@ namespace Nikse.SubtitleEdit.Forms
         private System.Windows.Forms.Timer timerTextUndo;
         private System.Windows.Forms.Timer timerOriginalTextUndo;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemMergeDialog;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemListMergeDialogWithPrevious;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemListMergeDialogWithNext;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemSurroundWithMusicSymbols;
         private System.Windows.Forms.ToolStripMenuItem superscriptToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem subscriptToolStripMenuItem;
