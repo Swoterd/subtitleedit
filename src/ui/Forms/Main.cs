@@ -205,7 +205,6 @@ namespace Nikse.SubtitleEdit.Forms
         private string[] _dragAndDropFiles;
         private readonly Timer _dragAndDropTimer = new Timer(); // to prevent locking windows explorer
         private readonly Timer _dragAndDropVideoTimer = new Timer(); // to prevent locking windows explorer
-        private long _labelNextTicks = -1;
         private bool _showBookmarkLabel = true;
         private ContextMenuStrip _bookmarkContextMenu;
         private readonly MainShortcuts _shortcuts = new MainShortcuts();
@@ -392,7 +391,6 @@ namespace Nikse.SubtitleEdit.Forms
                 labelOriginalSingleLine.Visible = false;
                 labelOriginalSingleLinePixels.Visible = false;
                 labelTextOriginalLineTotal.Visible = false;
-                labelNextWord.Visible = false;
 
                 _contextMenuStripPlayRate = new ContextMenuStrip();
                 SetLanguage(Configuration.Settings.General.Language);
@@ -6064,7 +6062,6 @@ namespace Nikse.SubtitleEdit.Forms
             SetTitle();
             SetUndockedWindowsTitle();
             mediaPlayer.SubtitleText = string.Empty;
-            labelNextWord.Visible = false;
             ShowStatus(_language.New);
 
             ResetShowEarlierOrLater();
@@ -20226,7 +20223,6 @@ namespace Nikse.SubtitleEdit.Forms
             }
             else if (mediaPlayer.VideoPlayer != null && _shortcuts.MainAdjustSetEndAndGotoNext == e.KeyData)
             {
-                ShowNextSubtitleLabel();
                 ButtonSetEndAndGoToNextClick(null, null);
                 e.SuppressKeyPress = true;
             }
@@ -20242,13 +20238,11 @@ namespace Nikse.SubtitleEdit.Forms
             }
             else if (mediaPlayer.VideoPlayer != null && _shortcuts.MainAdjustInsertViaEndAutoStartAndGoToNext == e.KeyData)
             {
-                ShowNextSubtitleLabel();
                 SetCurrentViaEndPositionAndGotoNext(FirstSelectedIndex, true);
                 e.SuppressKeyPress = true;
             }
             else if (mediaPlayer.VideoPlayer != null && _shortcuts.MainAdjustSetEndMinusGapAndStartNextHere == e.KeyData)
             {
-                ShowNextSubtitleLabel();
                 SetEndMinusGapAndStartNextHere(FirstSelectedIndex);
                 e.SuppressKeyPress = true;
             }
@@ -20264,13 +20258,11 @@ namespace Nikse.SubtitleEdit.Forms
             }
             else if (mediaPlayer.VideoPlayer != null && _shortcuts.MainAdjustSetEndNextStartAndGoToNext == e.KeyData)
             {
-                ShowNextSubtitleLabel();
                 SetCurrentEndNextStartAndGoToNext(FirstSelectedIndex);
                 e.SuppressKeyPress = true;
             }
             else if (mediaPlayer.VideoPlayer != null && _shortcuts.MainAdjustStartDownEndUpAndGoToNext == e.KeyData && _mainAdjustStartDownEndUpAndGoToNextParagraph == null)
             {
-                ShowNextSubtitleLabel();
                 _mainAdjustStartDownEndUpAndGoToNextParagraph = _subtitle.GetParagraphOrDefault(FirstSelectedIndex);
                 SetStartTime(true, mediaPlayer.CurrentPosition);
                 e.SuppressKeyPress = true;
@@ -22101,30 +22093,6 @@ namespace Nikse.SubtitleEdit.Forms
             SubtitleListview1.SyntaxColorLineBackground(_subtitle.Paragraphs, i, p);
             UpdateSourceView();
             audioVisualizer.Invalidate();
-        }
-
-        private void ShowNextSubtitleLabel()
-        {
-            if (audioVisualizer.Visible && audioVisualizer.WavePeaks != null && audioVisualizer.Width > 300 && _subtitleListViewIndex >= 0)
-            {
-                var next = _subtitle.GetParagraphOrDefault(_subtitleListViewIndex + 1);
-                if (next != null && !string.IsNullOrEmpty(next.Text))
-                {
-                    labelNextWord.Top = audioVisualizer.Top;
-                    labelNextWord.Text = string.Format(_language.NextX, HtmlUtil.RemoveHtmlTags(next.Text, true).Replace(Environment.NewLine, " "));
-                    labelNextWord.Left = audioVisualizer.Width / 2 - labelNextWord.Width / 2 + audioVisualizer.Left;
-                    labelNextWord.Visible = true;
-                    _labelNextTicks = Stopwatch.GetTimestamp();
-                }
-                else
-                {
-                    labelNextWord.Visible = false;
-                }
-            }
-            else
-            {
-                labelNextWord.Visible = false;
-            }
         }
 
         private void MergeSelectedLinesOnlyFirstText()
@@ -25512,10 +25480,6 @@ namespace Nikse.SubtitleEdit.Forms
                 }
 
 
-                if (labelNextWord.Visible && _labelNextTicks + 100000000 < Stopwatch.GetTimestamp())
-                {
-                    labelNextWord.Visible = false;
-                }
 
                 if (audioVisualizer.WavePeaks == null)
                 {
@@ -31812,7 +31776,6 @@ namespace Nikse.SubtitleEdit.Forms
                 return;
             }
 
-            ShowNextSubtitleLabel();
 
             if (mediaPlayer.VideoPlayer == null || string.IsNullOrEmpty(_videoFileName))
             {

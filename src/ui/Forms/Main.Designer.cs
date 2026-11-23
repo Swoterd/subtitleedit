@@ -374,7 +374,6 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelWaveformSnapThreshold = new System.Windows.Forms.Label();
             this.numericUpDownWaveformSnapThreshold = new Nikse.SubtitleEdit.Controls.NikseUpDown();
             this.labelWaveformSnapThresholdUnit = new System.Windows.Forms.Label();
-            this.labelNextWord = new System.Windows.Forms.Label();
             this.audioVisualizer = new Nikse.SubtitleEdit.Controls.AudioVisualizer();
             this.checkBoxSyncListViewWithVideoWhilePlaying = new System.Windows.Forms.CheckBox();
             this.labelVideoInfo = new System.Windows.Forms.Label();
@@ -3379,7 +3378,6 @@ namespace Nikse.SubtitleEdit.Forms
             //
             this.panelWaveform.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom |
                 System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            this.panelWaveform.Controls.Add(this.labelNextWord);
             this.panelWaveform.Controls.Add(this.audioVisualizer);
             this.panelWaveform.Controls.Add(this.panelWaveformHeader);
             this.panelWaveform.Location = new System.Drawing.Point(472, 32);
@@ -3454,18 +3452,6 @@ namespace Nikse.SubtitleEdit.Forms
             this.labelWaveformSnapThresholdUnit.Margin = new System.Windows.Forms.Padding(0, 6, 3, 0);
             this.labelWaveformSnapThresholdUnit.Name = "labelWaveformSnapThresholdUnit";
             this.labelWaveformSnapThresholdUnit.Text = "ms";
-            //
-            // labelNextWord
-            // 
-            this.labelNextWord.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
-            this.labelNextWord.AutoSize = true;
-            this.labelNextWord.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelNextWord.Location = new System.Drawing.Point(0, 25);
-            this.labelNextWord.Name = "labelNextWord";
-            this.labelNextWord.Size = new System.Drawing.Size(71, 17);
-            this.labelNextWord.TabIndex = 13;
-            this.labelNextWord.Text = "Next: xxx";
-            this.labelNextWord.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // audioVisualizer
             // 
@@ -6578,7 +6564,6 @@ namespace Nikse.SubtitleEdit.Forms
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemSetRegion;
         private System.Windows.Forms.ToolStripMenuItem insertSubtitleHereToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem actorToolStripMenuItem;
-        private System.Windows.Forms.Label labelNextWord;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemOpenVideoFromUrl;
         private System.Windows.Forms.ToolStripMenuItem smpteTimeModedropFrameToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem moveTextUpToolStripMenuItem;
