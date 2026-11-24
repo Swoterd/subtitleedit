@@ -40,6 +40,11 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
         private int _lastLoggedResizeHeight = -1;
         private Timer _hideMpcTimer = new Timer();
         private int _hideMpcTimerCount;
+        private bool _resizeScheduled;
+        private int _requestedResizeWidth;
+        private int _requestedResizeHeight;
+        private int _appliedResizeWidth = -1;
+        private int _appliedResizeHeight = -1;
 
         public override string PlayerName => "MPC-HC";
 
@@ -217,9 +222,9 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                 FileName = GetMpcFileName(),
                 Arguments = "/new /minimized /slave " + _messageHandlerHandle
             };
+            // The slave Connect message is our readiness notification. Waiting for
+            // input idle here can block the same UI thread that must receive it.
             _process = Process.Start(_startInfo);
-            _process?.WaitForInputIdle();
-            CacheMainWindowHandle();
         }
 
         private void PositionTimerTick(object sender, EventArgs e)
@@ -233,6 +238,30 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             var cds = (NativeMethods.CopyDataStruct)Marshal.PtrToStructure(message.LParam, typeof(NativeMethods.CopyDataStruct));
             var command = cds.dwData.ToUInt32();
             var param = Marshal.PtrToStringAuto(cds.lpData);
+            // WM_COPYDATA is synchronous. Copy its payload now, then return to MPC
+            // before any seek, pause, layout or callback sends work back to it.
+            DeferPlayerAction(() => ProcessMpcNotification(command, param));
+        }
+
+        private void DeferPlayerAction(Action action)
+        {
+            var receiver = _form;
+            if (receiver == null || receiver.IsDisposed || !receiver.IsHandleCreated)
+            {
+                return;
+            }
+
+            receiver.BeginInvoke(new Action(() =>
+            {
+                if (_form == receiver && !receiver.IsDisposed)
+                {
+                    action();
+                }
+            }));
+        }
+
+        private void ProcessMpcNotification(uint command, string param)
+        {
             var multiParam = new string[0];
             if (param != null)
             {
@@ -243,7 +272,8 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             {
                 case MpcHcCommand.Connect:
                     _positionTimer?.Stop();
-                    _mpcHandle = (IntPtr)Convert.ToInt64(Marshal.PtrToStringAuto(cds.lpData));
+                    _mpcHandle = (IntPtr)Convert.ToInt64(param, CultureInfo.InvariantCulture);
+                    CacheMainWindowHandle();
                     SendMpcMessage(MpcHcCommand.OpenFile, _videoFileName);
                     _positionTimer?.Start();
                     break;
@@ -254,11 +284,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                     if (param == ModePlay && _loaded == 0)
                     {
                         _loaded = 1;
-                        if (!HijackMpcHc())
-                        {
-                            Application.DoEvents();
-                            HijackMpcHc();
-                        }
+                        HijackMpcHc();
                     }
                     HideMpcPlayerWindow();
                     break;
@@ -290,7 +316,11 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
                             _hideMpcTimer.Stop();
                             if (_hideMpcTimerCount > 0)
                             {
-                                Application.DoEvents();
+                                if (_videoHandle == IntPtr.Zero && HijackMpcHc())
+                                {
+                                    ResizeToOwnerControl();
+                                }
+
                                 HideMpcPlayerWindow();
                                 _hideMpcTimerCount--;
                                 _hideMpcTimer.Start();
@@ -436,17 +466,54 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
 
         public override void Resize(int width, int height)
         {
-            if (_process == null || _videoHandle == IntPtr.Zero)
+            if (_process == null || _videoHandle == IntPtr.Zero || _form == null || width <= 0 || height <= 0)
             {
                 return;
             }
 
+            _requestedResizeWidth = width;
+            _requestedResizeHeight = height;
+            if (_resizeScheduled)
+            {
+                return;
+            }
+
+            // Coalesce nested startup/layout changes and leave the current window
+            // notification before touching windows owned by another process.
+            _resizeScheduled = true;
+            DeferPlayerAction(() =>
+            {
+                _resizeScheduled = false;
+                ApplyRequestedResize();
+            });
+        }
+
+        private void ApplyRequestedResize()
+        {
+            if (_process == null || _process.HasExited || _videoHandle == IntPtr.Zero ||
+                _appliedResizeWidth == _requestedResizeWidth && _appliedResizeHeight == _requestedResizeHeight)
+            {
+                return;
+            }
+
+            var width = _requestedResizeWidth;
+            var height = _requestedResizeHeight;
             NativeMethods.ShowWindow(GetMainWindowHandle(), NativeMethods.ShowWindowCommands.ShowNoActivate);
-            // Raise the renderer inside its video panel, without activating it or its owner.
-            NativeMethods.SetWindowPos(_videoHandle, (IntPtr)NativeMethods.SpecialWindowHandles.HWND_TOP, 0, 0, width, height,
-                NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE |
-                NativeMethods.SetWindowPosFlags.SWP_NOOWNERZORDER);
-            HideMpcPlayerWindow();
+            try
+            {
+                // Keep the renderer initialization sequence and its local video-panel Z order.
+                if (NativeMethods.SetWindowPos(_videoHandle, (IntPtr)NativeMethods.SpecialWindowHandles.HWND_TOP, 0, 0, width, height,
+                    NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE |
+                    NativeMethods.SetWindowPosFlags.SWP_NOOWNERZORDER))
+                {
+                    _appliedResizeWidth = width;
+                    _appliedResizeHeight = height;
+                }
+            }
+            finally
+            {
+                HideMpcPlayerWindow();
+            }
         }
 
         private static void ResizeChildWindows(IntPtr parentHandle, int width, int height)

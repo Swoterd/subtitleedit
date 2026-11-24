@@ -20,6 +20,8 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
             if (m.Msg == NativeMethods.WindowsMessageCopyData && OnCopyData != null)
             {
                 OnCopyData.Invoke(m, EventArgs.Empty);
+                m.Result = new IntPtr(1);
+                return;
             }
             base.WndProc(ref m);
         }
